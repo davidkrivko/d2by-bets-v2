@@ -6,6 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
+.idea
+client_secret.json
+gmail_token.json
+
 # Distribution / packaging
 .Python
 build/
