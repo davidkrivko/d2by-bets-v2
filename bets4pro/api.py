@@ -1,14 +1,10 @@
-import asyncio
 import datetime
-import itertools
 import json
-
 import aiohttp
 
 from bs4 import BeautifulSoup
 
-from bets4pro.bets import get_bet_types, save_bets
-from bets4pro.matches import save_match_data
+from main_app.utils import teams_right_order
 from utils import update_team_name
 
 
@@ -30,10 +26,10 @@ HEADERS = {
 }
 
 
-async def get_match_bets(match_data, bet_types):
+async def get_match_bets(match_id, bet_types):
     async with aiohttp.ClientSession(headers=HEADERS) as session:
         async with session.get(
-            f"https://bets4.org/widget/cofs_api.php?tournament_id={match_data["id"]}",
+            f"https://bets4.org/widget/cofs_api.php?tournament_id={match_id}",
             ssl=False
         ) as resp:
             response = await resp.text()
@@ -81,7 +77,7 @@ async def get_match_bets(match_data, bet_types):
                     "is_live": is_live,
                     "is_active": is_active,
                     "type_id": type_id,
-                    "match_id": match_data["id"],
+                    "match_id": match_id,
                     "map": map,
                     "side": side,
                     "value": value,
@@ -113,6 +109,9 @@ async def get_match_data(block, is_live=False):
 
     team_1 = block.find(class_="team_1").get_text(separator="_^_", strip=True).split("_^_")[0]
     team_2 = block.find(class_="team_2").get_text(separator="_^_", strip=True).split("_^_")[0]
+    team_1 = update_team_name(team_1)
+    team_2 = update_team_name(team_2)
+    team_1, team_2, _ = teams_right_order(team_1, team_2)
 
     match_data = {
         "team_1": update_team_name(team_1),

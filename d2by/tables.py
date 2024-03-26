@@ -1,5 +1,4 @@
 from sqlalchemy import (
-    Table,
     Column,
     String,
     Numeric,
@@ -9,39 +8,43 @@ from sqlalchemy import (
     ForeignKey,
 )
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import relationship
 
-from database.connection import meta
-from database.tables import bets_types_table
-
-
-d2by_matches = Table(
-    "d2by_matches",
-    meta,
-    Column("id", Integer, primary_key=True, autoincrement=True),
-    Column("team_1", String),
-    Column("team_2", String),
-    Column("start_time", TIMESTAMP),
-    Column("game", String),
-    Column("team_1_short", String, nullable=True),
-    Column("team_2_short", String, nullable=True),
-    Column("d2by_id", String, nullable=True),
-    Column("d2by_url", String, nullable=True),
-    extend_existing=True,
-)
+from database.connection import Base
 
 
-d2by_bets_table = Table(
-    "d2by_bets",
-    meta,
-    Column("id", Integer, primary_key=True, autoincrement=True),
-    Column("cfs", JSONB, default={}),
-    Column("probs", JSONB, default={}),
-    Column("value", Numeric(precision=5, scale=1)),
-    Column("side", Integer, nullable=True),
-    Column("map", Integer, nullable=True),
-    Column("type_id", ForeignKey(bets_types_table.c.id, ondelete="CASCADE")),
-    Column("match_id", ForeignKey(d2by_matches.c.id, ondelete="CASCADE")),
-    Column("d2by_id", String),
-    Column("is_active", Boolean),
-    extend_existing=True,
-)
+class D2BYMatches(Base):
+    __tablename__ = 'd2by_matches'
+    __table_args__ = {'extend_existing': True}
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    team_1 = Column(String)
+    team_2 = Column(String)
+    start_time = Column(TIMESTAMP)
+    game = Column(String)
+    team_1_short = Column(String, nullable=True)
+    team_2_short = Column(String, nullable=True)
+    match_id = Column(Integer, ForeignKey('matches.id', ondelete="CASCADE"))
+    d2by_id = Column(String, nullable=True)
+    d2by_url = Column(String, nullable=True)
+
+    match = relationship("Match", back_populates="d2by_matches")
+
+
+class D2BYBets(Base):
+    __tablename__ = 'd2by_bets'
+    __table_args__ = {'extend_existing': True}
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    cfs = Column(JSONB, default={})
+    probs = Column(JSONB, default={})
+    value = Column(Numeric(precision=5, scale=1))
+    side = Column(Integer, nullable=True)
+    map = Column(Integer, nullable=True)
+    type_id = Column(Integer, ForeignKey('bets_type.id', ondelete="CASCADE"))
+    match_id = Column(Integer, ForeignKey('matches.id', ondelete="CASCADE"))
+    d2by_id = Column(String)
+    is_active = Column(Boolean)
+
+    bet_type = relationship("BetsType", back_populates="d2by_bets")
+    match = relationship("Match", back_populates="d2by_bets")

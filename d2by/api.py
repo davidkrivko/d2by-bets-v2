@@ -4,6 +4,7 @@ import json
 import aiohttp
 
 from config import D2BY_TIME_DELTA, DEFAULT_D2BY_HEADERS
+from main_app.utils import teams_right_order
 from telegram import send_telegram_message_v2
 from utils import update_team_name
 
@@ -19,27 +20,31 @@ async def collect_d2by_v2_matches():
 
     data = response["data"]["datas"]
 
-    matches = [
-        dict(
-            d2by_id=match["id"],
-            team_1=update_team_name(match["opponents"][0]["name"]),
-            team_2=update_team_name(match["opponents"][1]["name"]),
-            team_1_short=match["opponents"][0]["acronym"]
-            if match["opponents"][0]["acronym"]
-            else match["opponents"][0]["name"],
-            team_2_short=match["opponents"][1]["acronym"]
-            if match["opponents"][1]["acronym"]
-            else match["opponents"][1]["name"],
-            d2by_url=f"https://d2by.com/esports/{match['slug']}",
-            start_time=datetime.datetime.strptime(
-                match["beginAt"], "%Y-%m-%dT%H:%M:%S.%fZ"
-            )
-            + datetime.timedelta(hours=D2BY_TIME_DELTA),
-            game=match["videogame"]["name"],
-        )
-        for match in data
-        if not match.get("endAt")
-    ]
+    matches = []
+    for match in data:
+        if not match.get("endAt"):
+            team_1 = match["opponents"][0]["name"]
+            team_2 = match["opponents"][1]["name"]
+            team_1 = update_team_name(team_1)
+            team_2 = update_team_name(team_2)
+            team_1, team_2, _ = teams_right_order(team_1, team_2)
+
+            matches.append(dict(
+                d2by_id=match["id"],
+                team_1=team_1,
+                team_2=team_2,
+                team_1_short=match["opponents"][0]["acronym"]
+                if match["opponents"][0]["acronym"]
+                else match["opponents"][0]["name"],
+                team_2_short=match["opponents"][1]["acronym"]
+                if match["opponents"][1]["acronym"]
+                else match["opponents"][1]["name"],
+                d2by_url=f"https://d2by.com/esports/{match['slug']}",
+                start_time=datetime.datetime.strptime(
+                    match["beginAt"], "%Y-%m-%dT%H:%M:%S.%fZ"
+                ) + datetime.timedelta(hours=D2BY_TIME_DELTA),
+                game=match["videogame"]["name"],
+            ))
 
     return matches
 
