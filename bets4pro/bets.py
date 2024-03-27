@@ -7,18 +7,6 @@ from database.connection import async_session
 from database.tables import BetsType
 
 
-async def get_bet_types():
-    async with async_session() as session:
-        try:
-            # Select all rows from the BetsType table
-            result = await session.execute(select(BetsType))
-            bet_types = result.scalars().all()
-            return bet_types
-        except Exception as e:
-            # Handle exceptions
-            print(f"An error occurred: {e}")
-
-
 # async def add_bet(data: dict):
 #     async with async_session() as session:
 #         try:

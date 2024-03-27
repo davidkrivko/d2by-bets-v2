@@ -37,9 +37,9 @@ class FanSportBets(Base):
     map = Column(Integer, nullable=True)
     side = Column(Integer, nullable=True)
     value = Column(Numeric, nullable=True)
-    type_id = Column(Integer, ForeignKey('bets_types.id', ondelete="CASCADE"))
+    type_id = Column(Integer, ForeignKey('bets_type.id', ondelete="CASCADE"))
     match_id = Column(Integer, ForeignKey('matches.id', ondelete="CASCADE"))
     is_active = Column(Boolean)
 
     bet_type = relationship("BetsType", back_populates="fansport_bets")
-    match = relationship("Match", back_populates="fansport_matches")
+    match = relationship("Match", back_populates="fansport_bets")

@@ -15,7 +15,11 @@ class Match(Base):
 
     bets4pro_matches = relationship("Bets4ProMatches", back_populates="match")
     d2by_matches = relationship("D2BYMatches", back_populates="match")
-    fansport_matches = relationship("FanSportBetsMatches", back_populates="match")
+    fansport_matches = relationship("FanSportMatches", back_populates="match")
+
+    bets4pro_bets = relationship("Bets4ProBets", back_populates="match")
+    d2by_bets = relationship("D2BYBets", back_populates="match")
+    fansport_bets = relationship("FanSportBets", back_populates="match")
 
 
 class BetsType(Base):

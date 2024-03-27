@@ -1,25 +1,39 @@
 import asyncio
 
+from sqlalchemy import select, update, insert
 from sqlalchemy.exc import TimeoutError as SQLTimeoutError
 
 from database.connection import async_session
+from database.tables import BetsType
+
+
+async def get_bet_types():
+    async with async_session() as session:
+        try:
+            # Select all rows from the BetsType table
+            stmt = select(BetsType)
+            result = await session.execute(stmt)
+            bet_types = result.scalars().all()
+            return bet_types
+        except Exception as e:
+            # Handle exceptions
+            print(f"An error occurred: {e}")
 
 
 async def get_bets_ids(table):
     async with async_session() as session:
         select_stmt = (
-            table
-            .select()
+            select(table)
             .with_only_columns(
                 *[
-                    table.c.id,
-                    table.c.match_id,
-                    table.c.type_id
+                    table.id,
+                    table.match_id,
+                    table.type_id
                 ])
         )
         try:
             result_set = await session.execute(select_stmt)
-            return result_set.fetchall()
+            return result_set.scalars().all()
         except SQLTimeoutError:
             pass
         except Exception as e:
@@ -46,10 +60,9 @@ async def save_bets(bets_data: list, table):
         update_stmts = []
         for bet in update_bets:
             update_stmt = (
-                table
-                .update()
+                update(table)
                 .where(
-                    table.c.id == bet["id"]
+                    table.id == bet["id"]
                 )
                 .values(bet)
             )
@@ -63,7 +76,7 @@ async def save_bets(bets_data: list, table):
             pass
 
         try:
-            insert_stmt = table.insert().values(create_bets)
+            insert_stmt = insert(table).values(create_bets)
             await session.execute(insert_stmt)
             await session.commit()
         except SQLTimeoutError:

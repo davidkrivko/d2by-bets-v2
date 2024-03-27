@@ -36,10 +36,10 @@ class Bets4ProBets(Base):
     map = Column(Integer, nullable=True)
     side = Column(Integer, nullable=True)
     value = Column(Numeric, nullable=True)
-    type_id = Column(Integer, ForeignKey('bets_types.id', ondelete="CASCADE"))
+    type_id = Column(Integer, ForeignKey('bets_type.id', ondelete="CASCADE"))
     match_id = Column(Integer, ForeignKey('matches.id', ondelete="CASCADE"))
     is_live = Column(Boolean)
     is_active = Column(Boolean)
 
     bet_type = relationship("BetsType", back_populates="bets4pro_bets")
-    match = relationship("Match", back_populates="bets4pro_matches")
+    match = relationship("Match", back_populates="bets4pro_bets")

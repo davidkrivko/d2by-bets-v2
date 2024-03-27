@@ -1,5 +1,6 @@
 from database.connection import async_session
 from sqlalchemy.exc import TimeoutError as SQLTimeoutError
+from sqlalchemy import select, _and
 
 
 async def save_match_data(matches_data: list, table):
@@ -7,8 +8,8 @@ async def save_match_data(matches_data: list, table):
         for data in matches_data:
 
             match_statement = (
-                table.select()
-                .where(table.c.team_1 == data["team_1"], table.c.team_2 == data["team_2"])
+                select(table)
+                .where(_and(table.team_1 == data["team_1"], table.team_2 == data["team_2"]))
                 .limit(1)
             )
             try:
@@ -40,7 +41,7 @@ async def save_match_data(matches_data: list, table):
 
                 await save_match_data([main_match_data], table)
             else:
-                update_stmt = table.update().where(table.c.id == match[0]).values(data)
+                update_stmt = table.update().where(table.id == match[0]).values(data)
 
                 try:
                     await session.execute(update_stmt)
