@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, TIMESTAMP
+from sqlalchemy import Column, Integer, String, TIMESTAMP, UniqueConstraint, func
 from sqlalchemy.orm import relationship
 
 from database.connection import Base
@@ -6,20 +6,18 @@ from database.connection import Base
 
 class Match(Base):
     __tablename__ = 'matches'
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {
+        'extend_existing': True,
+    }
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     team_1 = Column(String)
     team_2 = Column(String)
     start_at = Column(TIMESTAMP)
 
-    bets4pro_matches = relationship("Bets4ProMatches", back_populates="match")
-    d2by_matches = relationship("D2BYMatches", back_populates="match")
-    fansport_matches = relationship("FanSportMatches", back_populates="match")
-
-    bets4pro_bets = relationship("Bets4ProBets", back_populates="match")
-    d2by_bets = relationship("D2BYBets", back_populates="match")
-    fansport_bets = relationship("FanSportBets", back_populates="match")
+    bets4pro_bets = relationship("bets4pro.tables.Bets4ProBets")
+    d2by_bets = relationship("d2by.tables.D2BYBets")
+    fansport_bets = relationship("fan_sport.tables.FanSportBets")
 
 
 class BetsType(Base):
@@ -32,6 +30,6 @@ class BetsType(Base):
     fansport_type = Column(String, nullable=True)
     bets4pro_type = Column(String, nullable=True)
 
-    bets4pro_bets = relationship("Bets4ProBets", back_populates="bet_type")
-    d2by_bets = relationship("D2BYBets", back_populates="bet_type")
-    fansport_bets = relationship("FanSportBets", back_populates="bet_type")
+    bets4pro_bets = relationship("bets4pro.tables.Bets4ProBets")
+    d2by_bets = relationship("d2by.tables.D2BYBets")
+    fansport_bets = relationship("fan_sport.tables.FanSportBets")

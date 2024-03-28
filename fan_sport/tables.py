@@ -20,12 +20,9 @@ class FanSportMatches(Base):
     team_1 = Column(String)
     team_2 = Column(String)
     sub_matches = Column(String)
-    match_id = Column(Integer, ForeignKey('matches.id', ondelete="CASCADE"))
     start_at = Column(TIMESTAMP)
     is_live = Column(Boolean)
     url = Column(String)
-
-    match = relationship("Match", back_populates="fansport_matches")
 
 
 class FanSportBets(Base):
@@ -37,9 +34,9 @@ class FanSportBets(Base):
     map = Column(Integer, nullable=True)
     side = Column(Integer, nullable=True)
     value = Column(Numeric, nullable=True)
-    type_id = Column(Integer, ForeignKey('bets_type.id', ondelete="CASCADE"))
     match_id = Column(Integer, ForeignKey('matches.id', ondelete="CASCADE"))
+    type_id = Column(Integer, ForeignKey('bets_type.id', ondelete="CASCADE"))
     is_active = Column(Boolean)
 
-    bet_type = relationship("BetsType", back_populates="fansport_bets")
-    match = relationship("Match", back_populates="fansport_bets")
+    bet_type = relationship("database.tables.BetsType")
+    match = relationship("database.tables.Match")

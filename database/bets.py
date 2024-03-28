@@ -1,10 +1,29 @@
 import asyncio
 
-from sqlalchemy import select, update, insert
+from sqlalchemy import select, update
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import TimeoutError as SQLTimeoutError
 
 from database.connection import async_session
 from database.tables import BetsType
+
+
+async def save_bets(bets_data: list, table):
+    async with async_session() as session:
+        try:
+            cols = table.__table__.columns.keys()
+
+            stmt = insert(table).values(bets_data)
+            set_ = {field: getattr(stmt.excluded, field) for field in cols}
+
+            stmt = stmt.on_conflict_do_update(
+                constraint=f'{table.__table__.name}_unique_constrain',
+                set_=set_
+            )
+            await session.execute(stmt)
+            await session.commit()
+        except Exception as e:
+            print(e)
 
 
 async def get_bet_types():
@@ -34,51 +53,6 @@ async def get_bets_ids(table):
         try:
             result_set = await session.execute(select_stmt)
             return result_set.scalars().all()
-        except SQLTimeoutError:
-            pass
-        except Exception as e:
-            pass
-
-
-async def save_bets(bets_data: list, table):
-    bets_ids = await get_bets_ids(table)
-
-    update_bets = []
-    create_bets = bets_data.copy()
-    for bet_id in bets_ids:
-        for bet_data in bets_data:
-            if (
-                    bet_data["match_id"] == bet_id[1]
-                    and bet_data["type_id"] == bet_id[2]
-            ):
-                create_bets.remove(bet_data)
-
-                bet_data["id"] = bet_id[0]
-                update_bets.append(bet_data)
-
-    async with async_session() as session:
-        update_stmts = []
-        for bet in update_bets:
-            update_stmt = (
-                update(table)
-                .where(
-                    table.id == bet["id"]
-                )
-                .values(bet)
-            )
-            update_stmts.append(session.execute(update_stmt))
-
-        try:
-            await asyncio.gather(*update_stmts)
-        except SQLTimeoutError:
-            pass
-        except Exception as e:
-            pass
-
-        try:
-            insert_stmt = insert(table).values(create_bets)
-            await session.execute(insert_stmt)
-            await session.commit()
         except SQLTimeoutError:
             pass
         except Exception as e:

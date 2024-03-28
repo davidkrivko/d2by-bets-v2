@@ -35,59 +35,59 @@ async def get_match_bets(match_id, bet_types):
             response = await resp.text()
             bets = json.loads(response)
 
-            bets = bets["response"]["cofs"]
-
             all_bets = []
-            for bet in bets:
-                b_type = bet["type"]
+            if len(bets["response"]) > 0:
+                bets = bets["response"]["cofs"]
+                for bet in bets:
+                    b_type = bet["type"]
 
-                type_id = None
-                for t in bet_types:
-                    if b_type in str(t[4]):
-                        type_id = t[0]
-                        break
+                    type_id = None
+                    for t in bet_types:
+                        if b_type in str(t.bets4pro_type):
+                            type_id = t.id
+                            break
 
-                map = None
-                side = None
-                value = None
-                if "game" in b_type:
-                    map = b_type.split("game")[1]
-                elif "hc" in b_type:
-                    side = int(b_type.split("hc")[-1])
-                    value = float(bet["show_type"].split()[-1])
+                    map = None
+                    side = None
+                    value = None
+                    if "game" in b_type:
+                        map = int(b_type.split("game")[1])
+                    elif "hc" in b_type:
+                        side = int(b_type.split("hc")[-1])
+                        value = float(bet["show_type"].split()[-1])
 
-                if type_id is None:
-                    continue
+                    if type_id is None:
+                        continue
 
-                cfs_data = {
-                    "1": round(1 + bet["team_1_cof"], 3),
-                    "2": round(1 + bet["team_2_cof"], 3),
-                }
+                    cfs_data = {
+                        "1": round(1 + bet["team_1_cof"], 3),
+                        "2": round(1 + bet["team_2_cof"], 3),
+                    }
 
-                is_live = True if str(bet["live"]) == "1" else False
+                    is_live = True if str(bet["live"]) == "1" else False
 
-                is_active = False
-                if str(bet["status"]) == "0" and str(bet["live"]) == "0":
-                    is_active = True
-                elif bet["status"] is True and str(bet["live"]) == "1" and bet["time_from_update"] < 60:
-                    is_active = True
+                    is_active = False
+                    if str(bet["status"]) == "0" and str(bet["live"]) == "0":
+                        is_active = True
+                    elif bet["status"] is True and str(bet["live"]) == "1" and bet["time_from_update"] < 60:
+                        is_active = True
 
-                bet_data = {
-                    "cfs": cfs_data,
-                    "is_live": is_live,
-                    "is_active": is_active,
-                    "type_id": type_id,
-                    "match_id": match_id,
-                    "map": map,
-                    "side": side,
-                    "value": value,
-                }
-                all_bets.append(bet_data)
+                    bet_data = {
+                        "cfs": cfs_data,
+                        "is_live": is_live,
+                        "is_active": is_active,
+                        "type_id": type_id,
+                        "match_id": match_id,
+                        "map": map,
+                        "side": side,
+                        "value": value,
+                    }
+                    all_bets.append(bet_data)
 
         return all_bets
 
 
-async def get_match_data(block, is_live=False):
+def get_match_data(block, is_live=False):
     link = block.find_parent()
     match = link.find_parent()
 
@@ -116,7 +116,7 @@ async def get_match_data(block, is_live=False):
     match_data = {
         "team_1": update_team_name(team_1),
         "team_2": update_team_name(team_2),
-        "start_time": start_at,
+        "start_at": start_at,
         "id": int(match_id),
         "is_live": is_live
     }
@@ -126,7 +126,7 @@ async def get_match_data(block, is_live=False):
 
 async def get_html_matches():
     async with aiohttp.ClientSession() as session:
-        async with session.get("https://bets4.org/en/", headers=HEADERS) as response:
+        async with session.get("https://bets4.org/en/", headers=HEADERS, ssl=False) as response:
             html_str = await response.text()
 
     html_str = html_str.replace('style="display: none;"', "")

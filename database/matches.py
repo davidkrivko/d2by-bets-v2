@@ -1,52 +1,20 @@
 from database.connection import async_session
-from sqlalchemy.exc import TimeoutError as SQLTimeoutError
-from sqlalchemy import select, _and
+from sqlalchemy.dialects.postgresql import insert
 
 
 async def save_match_data(matches_data: list, table):
     async with async_session() as session:
-        for data in matches_data:
+        try:
+            cols = table.__table__.columns.keys()
 
-            match_statement = (
-                select(table)
-                .where(_and(table.team_1 == data["team_1"], table.team_2 == data["team_2"]))
-                .limit(1)
+            stmt = insert(table).values(matches_data)
+            set_ = {field: getattr(stmt.excluded, field) for field in cols}
+
+            stmt = stmt.on_conflict_do_update(
+                constraint=f'{table.__table__.name}_unique_constrain',
+                set_=set_
             )
-            try:
-                result_set = await session.execute(match_statement)
-
-                match = result_set.fetchone()
-            except SQLTimeoutError:
-                return
-            except:
-                match = None
-
-            if match is None:
-                insert_stmt = table.insert().values(
-                    data,
-                )
-                try:
-                    await session.execute(insert_stmt)
-                    await session.commit()
-                except SQLTimeoutError:
-                    return
-                except Exception as e:
-                    pass
-
-                main_match_data = {
-                    "team_1": data["team_1"],
-                    "team_2": data["team_2"],
-                    "start_at": data["start_at"],
-                }
-
-                await save_match_data([main_match_data], table)
-            else:
-                update_stmt = table.update().where(table.id == match[0]).values(data)
-
-                try:
-                    await session.execute(update_stmt)
-                    await session.commit()
-                except SQLTimeoutError:
-                    return
-                except Exception as e:
-                    pass
+            await session.execute(stmt)
+            await session.commit()
+        except Exception as e:
+            print(e)

@@ -16,15 +16,12 @@ class Bets4ProMatches(Base):
     __tablename__ = 'bets4pro_matches'
     __table_args__ = {'extend_existing': True}
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(Integer, primary_key=True)
     team_1 = Column(String)
     team_2 = Column(String)
-    match_id = Column(Integer, ForeignKey('matches.id', ondelete="CASCADE"))
     start_at = Column(TIMESTAMP)
     is_live = Column(Boolean)
     url = Column(String, nullable=True)
-
-    match = relationship("Match", back_populates="bets4pro_matches")
 
 
 class Bets4ProBets(Base):
@@ -41,5 +38,5 @@ class Bets4ProBets(Base):
     is_live = Column(Boolean)
     is_active = Column(Boolean)
 
-    bet_type = relationship("BetsType", back_populates="bets4pro_bets")
-    match = relationship("Match", back_populates="bets4pro_bets")
+    bet_type = relationship("database.tables.BetsType")
+    match = relationship("database.tables.Match")

@@ -40,7 +40,7 @@ async def collect_d2by_v2_matches():
                 if match["opponents"][1]["acronym"]
                 else match["opponents"][1]["name"],
                 d2by_url=f"https://d2by.com/esports/{match['slug']}",
-                start_time=datetime.datetime.strptime(
+                start_at=datetime.datetime.strptime(
                     match["beginAt"], "%Y-%m-%dT%H:%M:%S.%fZ"
                 ) + datetime.timedelta(hours=D2BY_TIME_DELTA),
                 game=match["videogame"]["name"],
