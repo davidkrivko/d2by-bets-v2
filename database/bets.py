@@ -14,7 +14,7 @@ async def save_bets(bets_data: list, table):
             cols = table.__table__.columns.keys()
 
             stmt = insert(table).values(bets_data)
-            set_ = {field: getattr(stmt.excluded, field) for field in cols}
+            set_ = {field: getattr(stmt.excluded, field) for field in cols if field != "id"}
 
             stmt = stmt.on_conflict_do_update(
                 constraint=f'{table.__table__.name}_unique_constrain',

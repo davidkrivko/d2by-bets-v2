@@ -1,4 +1,3 @@
-import copy
 import datetime
 import json
 
@@ -14,11 +13,8 @@ from fan_sport.tables import FanSportMatches
 from fan_sport.tables import FanSportBets
 from main_app.utils import teams_right_order
 
-from utils import (
+from main_app.utils import (
     update_team_name,
-    are_teams_similar,
-    remove_id_key,
-    is_reversed,
     create_fan_sport_url,
     get_team_name,
     add_bet_to_cfs,

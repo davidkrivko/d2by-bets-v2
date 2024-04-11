@@ -1,7 +1,7 @@
 from sqlalchemy import (
     Column,
     String,
-    Numeric,
+    Float,
     Integer,
     TIMESTAMP,
     Boolean,
@@ -24,8 +24,11 @@ class D2BYMatches(Base):
     game = Column(String)
     team_1_short = Column(String, nullable=True)
     team_2_short = Column(String, nullable=True)
+    match_id = Column(Integer, ForeignKey('matches.id', ondelete="CASCADE"))
     d2by_id = Column(String, nullable=True)
-    d2by_url = Column(String, nullable=True)
+    url = Column(String, nullable=True)
+
+    match = relationship("database.tables.Match", overlaps="d2by_matches")
 
 
 class D2BYBets(Base):
@@ -35,7 +38,7 @@ class D2BYBets(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     cfs = Column(JSONB, default={})
     probs = Column(JSONB, default={})
-    value = Column(Numeric(precision=5, scale=1))
+    value = Column(Float, nullable=True)
     side = Column(Integer, nullable=True)
     map = Column(Integer, nullable=True)
     type_id = Column(Integer, ForeignKey('bets_type.id', ondelete="CASCADE"))
@@ -43,5 +46,5 @@ class D2BYBets(Base):
     d2by_id = Column(String)
     is_active = Column(Boolean)
 
-    bet_type = relationship("database.tables.BetsType")
-    match = relationship("database.tables.Match")
+    bet_type = relationship("database.tables.BetsType", overlaps="d2by_bets")
+    match = relationship("database.tables.Match", overlaps="d2by_bets")

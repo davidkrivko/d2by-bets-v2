@@ -5,8 +5,8 @@ import aiohttp
 
 from config import D2BY_TIME_DELTA, DEFAULT_D2BY_HEADERS
 from main_app.utils import teams_right_order
-from telegram import send_telegram_message_v2
-from utils import update_team_name
+from main_app.telegram import send_telegram_message_v2
+from main_app.utils import update_team_name
 
 
 async def collect_d2by_v2_matches():
@@ -27,32 +27,52 @@ async def collect_d2by_v2_matches():
             team_2 = match["opponents"][1]["name"]
             team_1 = update_team_name(team_1)
             team_2 = update_team_name(team_2)
-            team_1, team_2, _ = teams_right_order(team_1, team_2)
+            team_1, team_2, is_reverse = teams_right_order(team_1, team_2)
+
+            if is_reverse:
+                if match["opponents"][1]["acronym"]:
+                    team_1_short = match["opponents"][1]["acronym"]
+                else:
+                    team_1_short = match["opponents"][1]["name"]
+
+                if match["opponents"][0]["acronym"]:
+                    team_2_short = match["opponents"][0]["acronym"]
+                else:
+                    team_2_short = match["opponents"][0]["name"]
+            else:
+                if match["opponents"][1]["acronym"]:
+                    team_2_short = match["opponents"][1]["acronym"]
+                else:
+                    team_2_short = match["opponents"][1]["name"]
+
+                if match["opponents"][0]["acronym"]:
+                    team_1_short = match["opponents"][0]["acronym"]
+                else:
+                    team_1_short = match["opponents"][0]["name"]
 
             matches.append(dict(
-                d2by_id=match["id"],
                 team_1=team_1,
                 team_2=team_2,
-                team_1_short=match["opponents"][0]["acronym"]
-                if match["opponents"][0]["acronym"]
-                else match["opponents"][0]["name"],
-                team_2_short=match["opponents"][1]["acronym"]
-                if match["opponents"][1]["acronym"]
-                else match["opponents"][1]["name"],
-                d2by_url=f"https://d2by.com/esports/{match['slug']}",
                 start_at=datetime.datetime.strptime(
                     match["beginAt"], "%Y-%m-%dT%H:%M:%S.%fZ"
                 ) + datetime.timedelta(hours=D2BY_TIME_DELTA),
-                game=match["videogame"]["name"],
+                additional_data=dict(
+                    d2by_id=match["id"],
+                    team_1_short=team_1_short,
+                    team_2_short=team_2_short,
+                    url=f"https://d2by.com/esports/{match['slug']}",
+                    game=match["videogame"]["name"],
+                    site="d2by",
+                ),
             ))
 
     return matches
 
 
-async def get_bets_of_d2by_match(match: dict, bet_types):
+async def get_bets_of_d2by_match(match, bet_types):
     async with aiohttp.ClientSession() as session:
         async with session.get(
-            f"https://api.d2by.com/api/v2/web/matchs/{match['d2by_id']}/markets",
+            f"https://api.d2by.com/api/v2/web/matchs/{match.d2by_id}/markets",
             ssl=False
         ) as resp:
             response = await resp.text()
@@ -61,26 +81,29 @@ async def get_bets_of_d2by_match(match: dict, bet_types):
     data = response["data"]
 
     tasks = [create_bet_v2(bet, match, bet_types) for bet in data]
-    await asyncio.gather(*tasks)
+    return await asyncio.gather(*tasks)
 
 
-async def create_bet_v2(bet_data: dict, match: dict, bet_types: list):
+async def create_bet_v2(bet_data: dict, match, bet_types: list):
     bet_type = None
     for bt in bet_types:
-        if bet_data["name"] in bt[2]:
-            bet_type = bt["id"]
+        if bet_data["template"] in bt.d2by_type:
+            bet_type = bt.id
+            break
 
     selections = bet_data["selections"]
 
     if bet_type and selections:
         bet = dict(
             map=bet_data["gamePosition"],
-            is_active=True if bet_data["status"] == "active" else False,
+            is_active=True if bet_data.get("status") == "active" and bet_data.get("reviewed") else False,
             type_id=bet_type,
-            match_id=match["id"],
+            match_id=match.match_id,
             d2by_id=bet_data["id"],
             cfs={},
             probs={},
+            value=None,
+            side=None,
         )
 
         for selection in selections:
@@ -95,9 +118,21 @@ async def create_bet_v2(bet_data: dict, match: dict, bet_types: list):
                 else prob
             )
             cf = round(1 / prob, 3)
-            if selection["name"] == match["team_1_short"]:
+
+            is_reverse = False
+            if selection["name"] == match.team_1_short:
+                if selection["participant_side"] == "home":
+                    is_reverse = False
+                else:
+                    is_reverse = True
+
                 team = "1"
-            elif selection["name"] == match["team_2_short"]:
+            elif selection["name"] == match.team_2_short:
+                if selection["participant_side"] == "away":
+                    is_reverse = False
+                else:
+                    is_reverse = True
+
                 team = "2"
             else:
                 team = selection["name"]
@@ -107,7 +142,7 @@ async def create_bet_v2(bet_data: dict, match: dict, bet_types: list):
             )
 
         if "handicap" in bet_data["template"]:
-            bet["side"] = 1 if selections[0]["handicap"] < 0 else 2
+            bet["side"] = 1 if (selections[0]["handicap"] < 0 and not is_reverse) or (selections[0]["handicap"] > 0 and is_reverse) else 2
             bet["value"] = abs(selections[0]["handicap"])
 
         if "over-under" in bet_data["template"]:

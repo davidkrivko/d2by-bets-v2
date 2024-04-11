@@ -20,9 +20,12 @@ class FanSportMatches(Base):
     team_1 = Column(String)
     team_2 = Column(String)
     sub_matches = Column(String)
+    match_id = Column(Integer, ForeignKey('matches.id', ondelete="CASCADE"))
     start_at = Column(TIMESTAMP)
     is_live = Column(Boolean)
     url = Column(String)
+
+    match = relationship("database.tables.Match", overlaps="fansport_matches")
 
 
 class FanSportBets(Base):
@@ -38,5 +41,5 @@ class FanSportBets(Base):
     type_id = Column(Integer, ForeignKey('bets_type.id', ondelete="CASCADE"))
     is_active = Column(Boolean)
 
-    bet_type = relationship("database.tables.BetsType")
-    match = relationship("database.tables.Match")
+    bet_type = relationship("database.tables.BetsType", overlaps="fansport_bets")
+    match = relationship("database.tables.Match", overlaps="fansport_bets")

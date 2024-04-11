@@ -1,8 +1,7 @@
 from sqlalchemy import select
 
 from database.connection import async_session
-from tables import Bets4ProMatches
-from sqlalchemy.exc import TimeoutError as SQLTimeoutError
+from bets4pro.tables import Bets4ProMatches
 
 
 async def get_matches_ids():

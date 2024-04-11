@@ -21,7 +21,12 @@ class Bets4ProMatches(Base):
     team_2 = Column(String)
     start_at = Column(TIMESTAMP)
     is_live = Column(Boolean)
+    is_reverse = Column(Boolean)
+    bets4pro_id = Column(String)
+    match_id = Column(Integer, ForeignKey('matches.id', ondelete="CASCADE"))
     url = Column(String, nullable=True)
+
+    match = relationship("database.tables.Match", overlaps="bets4pro_matches")
 
 
 class Bets4ProBets(Base):
@@ -37,6 +42,7 @@ class Bets4ProBets(Base):
     match_id = Column(Integer, ForeignKey('matches.id', ondelete="CASCADE"))
     is_live = Column(Boolean)
     is_active = Column(Boolean)
+    hash = Column(String)
 
-    bet_type = relationship("database.tables.BetsType")
-    match = relationship("database.tables.Match")
+    bet_type = relationship("database.tables.BetsType", overlaps="bets4pro_bets")
+    match = relationship("database.tables.Match", overlaps="bets4pro_bets")
