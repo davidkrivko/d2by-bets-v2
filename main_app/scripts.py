@@ -67,6 +67,12 @@ async def get_good_bets():
     return result_df
 
 
+def make_bets_on_web_sites(group, site):
+    if site == "bets4pro":
+        pass
+
+
+
 async def add_rows():
     start_at = datetime.datetime.now()
     await asyncio.gather(*[update_matches_d2by(), update_matches_bets4pro()])
@@ -81,7 +87,7 @@ if __name__ == "__main__":
 
     bets = asyncio.run(get_good_bets())
 
-
+    bets.groupby(["site"]).apply(lambda x: make_bets_on_web_sites(x, x.name[0]))
 
     end_at = datetime.datetime.now()
     print(end_at - start_at)

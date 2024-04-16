@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 from sqlalchemy import select, and_, or_
 from database.tables import Match
 from bets4pro.tables import Bets4ProBets
@@ -54,6 +53,7 @@ async def get_bets():
                 and_(
                     or_(D2BYBets.cfs != None, FanSportBets.cfs != None),
                     Bets4ProBets.is_active == True,
+                    Bets4ProBets.is_live == True,
                 )
             )
         )
