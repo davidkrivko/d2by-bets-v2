@@ -5,7 +5,7 @@ import aiohttp
 
 from config import D2BY_TIME_DELTA, DEFAULT_D2BY_HEADERS
 from main_app.utils import teams_right_order
-from main_app.telegram import send_telegram_message_v2
+from telegram import send_telegram_message
 from main_app.utils import update_team_name
 
 
@@ -157,16 +157,16 @@ async def make_bet(auth_token, data):
 
     async with aiohttp.ClientSession(cookies=[auth_token], headers=headers) as session:
         async with session.post(
-            "https://api.d2by.com/api/v2/web/matchs/predicts", json=[data],
+            "https://api.d2by.com/api/v2/web/matchs/predicts", json=data,
             ssl=False
         ) as resp:
             response = await resp.text()
             response = json.loads(response)
 
             if response["meta"]["status"] == 200:
-                return {"status": "Success", "market": data["market"]}
+                return {"status": "Success", "market": data}
             else:
-                return {"status": response["meta"]["internalMessage"], "market": data["market"]}
+                return {"status": response["meta"]["internalMessage"]}
 
 
 async def get_balance(auth_token):
@@ -188,4 +188,4 @@ async def get_balance(auth_token):
 
                 message = f"GOLD: {gold}\nDIAMOND: {diamond}\nGEM: {gem}"
 
-                await send_telegram_message_v2(message)
+                await send_telegram_message(message)

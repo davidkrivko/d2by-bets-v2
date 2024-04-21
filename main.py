@@ -1,12 +1,12 @@
 import asyncio
 from dotenv import load_dotenv
-import datetime
+
 
 load_dotenv()
 
-from database.utils import create_all_tables
+# from database.utils import create_all_tables
+from main_app.scripts import main_script
 
-# from scripts import update_all_bets
 
 if __name__ == "__main__":
-    bets = asyncio.run(create_all_tables())
+    bets = asyncio.run(main_script())

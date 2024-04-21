@@ -1,7 +1,7 @@
 from sqlalchemy import select, and_, or_
 from database.tables import Match
-from bets4pro.tables import Bets4ProBets
-from d2by.tables import D2BYBets
+from bets4pro.tables import Bets4ProBets, Bets4ProMatches
+from d2by.tables import D2BYBets, D2BYMatches
 from database.connection import async_session
 from fan_sport.tables import FanSportBets
 
@@ -11,6 +11,8 @@ async def get_bets():
         stmt = (
             select(
                 Match.id,
+                Match.team_1,
+                Match.team_2,
                 Bets4ProBets.cfs,
                 D2BYBets.cfs,
                 FanSportBets.cfs,
@@ -21,8 +23,16 @@ async def get_bets():
                 Bets4ProBets.side,
                 Bets4ProBets.map,
                 Bets4ProBets.type_id,
+                D2BYBets.probs,
+                D2BYBets.d2by_id,
+                D2BYMatches.url,
+                Bets4ProBets.bets4pro_name,
+                Bets4ProMatches.url,
+                Bets4ProMatches.bets4pro_id,
             )
             .join(Bets4ProBets, Match.id == Bets4ProBets.match_id)
+            .outerjoin(D2BYMatches, Match.id == D2BYMatches.match_id)
+            .outerjoin(Bets4ProMatches, Match.id == Bets4ProMatches.match_id)
             .outerjoin(
                 D2BYBets,
                 and_(
@@ -31,8 +41,8 @@ async def get_bets():
                     or_(Bets4ProBets.value == D2BYBets.value,
                         and_(Bets4ProBets.value == None, D2BYBets.value == None)),
                     Bets4ProBets.type_id == D2BYBets.type_id,
+                    Bets4ProBets.match_id == D2BYBets.match_id,
                     D2BYBets.is_active == True,
-                    Bets4ProBets.match_id == D2BYBets.match_id
                 )
             )
             .outerjoin(
@@ -52,8 +62,7 @@ async def get_bets():
             .filter(
                 and_(
                     or_(D2BYBets.cfs != None, FanSportBets.cfs != None),
-                    Bets4ProBets.is_active == True,
-                    Bets4ProBets.is_live == True,
+                    Bets4ProBets.is_active == True
                 )
             )
         )

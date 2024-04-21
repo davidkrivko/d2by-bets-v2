@@ -42,6 +42,7 @@ class Bets4ProBets(Base):
     match_id = Column(Integer, ForeignKey('matches.id', ondelete="CASCADE"))
     is_live = Column(Boolean)
     is_active = Column(Boolean)
+    bets4pro_name = Column(String)
     hash = Column(String)
 
     bet_type = relationship("database.tables.BetsType", overlaps="bets4pro_bets")

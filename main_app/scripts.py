@@ -1,13 +1,20 @@
 import asyncio
 import datetime
 import json
+import os
 
 import numpy as np
 import pandas as pd
+from simplegmail import Gmail
 
+from bets4pro.login import login
+from d2by.api import make_bet as d2by_make_bet
+from bets4pro.api import make_bet as bets4pro_make_bet
+from d2by.login import get_token
 from main_app.bets import get_bets
 from bets4pro.script import update_bets as update_bets_bets4pro, update_matches as update_matches_bets4pro
 from d2by.scripts import update_bets as update_bets_d2by, update_matches as update_matches_d2by
+from telegram import send_match_to_telegram
 
 
 def compare_bets(row):
@@ -48,10 +55,13 @@ async def get_good_bets():
     bets = await get_bets()
 
     columns = [
-        "match_id", "bets4pro_cfs", "d2by_cfs",
+        "match_id", "team_1", "team_2",
+        "bets4pro_cfs", "d2by_cfs",
         "fan_cfs", "bets4pro_id", "d2by_id",
         "fan_id", "value", "side",
-        "map", "type_id"
+        "map", "type_id", "d2by_probs", "d2by_true_id",
+        "d2by_url", "bets4pro_bet_name", "bets4pro_url",
+        "bets4pro_match_id"
     ]
     bets_df = pd.DataFrame(
         columns=columns,
@@ -62,15 +72,39 @@ async def get_good_bets():
     result_df = bets_df.apply(compare_bets, axis=1)
 
     # Concatenate the resulting DataFrames
-    result_df = pd.concat(result_df.tolist(), ignore_index=True)
+    if result_df.shape[0] > 0:
+        result_df = pd.concat(result_df.tolist(), ignore_index=True)
 
-    return result_df
+        return result_df
 
 
-def make_bets_on_web_sites(group, site):
+async def make_bets_on_web_sites(group, site, d2by_token, bets4pro_token):
     if site == "bets4pro":
-        pass
+        tasks = []
+        for _, bet in group.iterrows():
+            # tasks.append(bets4pro_make_bet(bet, bets4pro_token))
+            tasks.append(send_match_to_telegram(bet))
 
+        await asyncio.gather(*tasks)
+    elif site == "d2by":
+        bets = []
+        tasks = []
+        for _, bet in group.iterrows():
+            # prob_data = json.loads(bet["d2by_probs"])
+            # prob_data = prob_data[bet["bet"]]
+            # data = {
+            #     "amount": 1,
+            #     "coinType": "GOLD",
+            #     "market": bet["d2by_true_id"],
+            #     "type": "SINGLE",
+            #     "currentRate": prob_data["prob"],
+            #     "selectPosition": prob_data["position"],
+            # }
+            # bets.append(data)
+            tasks.append(send_match_to_telegram(bet))
+
+        await asyncio.gather(*tasks)
+        # await d2by_make_bet(d2by_token, bets)
 
 
 async def add_rows():
@@ -82,12 +116,34 @@ async def add_rows():
     print(end_at - start_at)
 
 
-if __name__ == "__main__":
+async def compare_circle(d2by_token, bets4pro_token):
     start_at = datetime.datetime.now()
 
-    bets = asyncio.run(get_good_bets())
+    bets = await get_good_bets()
 
-    bets.groupby(["site"]).apply(lambda x: make_bets_on_web_sites(x, x.name[0]))
+    tasks = []
+    for name, bets in bets.groupby(["site"]):
+        tasks.append(make_bets_on_web_sites(bets, name[0], d2by_token, bets4pro_token))
+
+    await asyncio.gather(*tasks)
 
     end_at = datetime.datetime.now()
     print(end_at - start_at)
+
+
+async def main_script():
+    # d2by_username = os.environ.get("D2BY_USERNAME")
+    # d2by_password = os.environ.get("D2BY_PASSWORD")
+    # gmail = Gmail()
+    #
+    # BETS4PRO_SESSION = login()
+    # D2BY_TOKEN = get_token(d2by_username, d2by_password, gmail)
+
+    BETS4PRO_SESSION = None
+    D2BY_TOKEN = None
+
+    await compare_circle(D2BY_TOKEN, BETS4PRO_SESSION)
+
+
+if __name__ == "__main__":
+    asyncio.run(main_script())

@@ -48,7 +48,7 @@ def get_verification_code(time, gmail_client):
 
         if i == 10:
             send_telegram_message_sync("Email is not coming!")
-            return None
+            return get_verification_code(time, gmail_client)
 
     html = message.html
     soup = BeautifulSoup(html, "html.parser")
@@ -109,8 +109,6 @@ def get_token(username, password, gmail_client):
     login_button.click()
 
     ver_code = get_verification_code(time, gmail_client)
-    if ver_code is None:
-        return get_token(username, password, gmail_client)
 
     wait = WebDriverWait(driver, 20)
     wait.until(
@@ -141,7 +139,7 @@ def get_token(username, password, gmail_client):
 
 async def create_new_token(gmail_client):
     new_token = get_token(username=USERNAME, password=PASSWORD, gmail_client=gmail_client)
-    global AUTH_TOKEN
-    AUTH_TOKEN = new_token
+    global D2BY_AUTH_TOKEN
+    D2BY_AUTH_TOKEN = new_token
 
-    return AUTH_TOKEN
+    return D2BY_AUTH_TOKEN
