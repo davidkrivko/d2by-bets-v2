@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import json
 import os
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -14,7 +15,11 @@ from d2by.login import get_token
 from main_app.bets import get_bets
 from bets4pro.script import update_bets as update_bets_bets4pro, update_matches as update_matches_bets4pro
 from d2by.scripts import update_bets as update_bets_d2by, update_matches as update_matches_d2by
+from main_app.matches import delete_old_matches
 from telegram import send_match_to_telegram
+
+
+warnings.filterwarnings("ignore")
 
 
 def compare_bets(row):
@@ -108,12 +113,16 @@ async def make_bets_on_web_sites(group, site, d2by_token, bets4pro_token):
 
 
 async def add_rows():
-    start_at = datetime.datetime.now()
-    await asyncio.gather(*[update_matches_d2by(), update_matches_bets4pro()])
-    await asyncio.gather(*[update_bets_bets4pro(), update_bets_d2by()])
-    end_at = datetime.datetime.now()
+    i = 0
+    while True:
+        tasks = [update_bets_bets4pro(), update_bets_d2by()]
 
-    print(end_at - start_at)
+        if i == 1000:
+            tasks.extend([update_matches_d2by(), update_matches_bets4pro(), delete_old_matches()])
+            i = 0
+
+        await asyncio.gather(*tasks)
+        i += 1
 
 
 async def compare_circle(d2by_token, bets4pro_token):
@@ -142,8 +151,9 @@ async def main_script():
     BETS4PRO_SESSION = None
     D2BY_TOKEN = None
 
-    await compare_circle(D2BY_TOKEN, BETS4PRO_SESSION)
+    while True:
+        await compare_circle(D2BY_TOKEN, BETS4PRO_SESSION)
 
 
 if __name__ == "__main__":
-    asyncio.run(main_script())
+    asyncio.run(add_rows())
