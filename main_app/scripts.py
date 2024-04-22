@@ -7,12 +7,6 @@ import numpy as np
 import pandas as pd
 from simplegmail import Gmail
 
-if os.environ.get('UBUNTU', None) is not None:
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    parent_dir = os.path.dirname(script_dir)
-
-    os.chdir(parent_dir)
-
 from bets4pro.login import login
 from bets4pro.tables import Bets4ProBets
 from d2by.api import make_bet as d2by_make_bet
@@ -24,7 +18,6 @@ from bets4pro.script import update_bets as update_bets_bets4pro, update_matches 
 from d2by.scripts import update_bets as update_bets_d2by, update_matches as update_matches_d2by
 from main_app.matches import delete_old_matches
 from telegram import send_match_to_telegram
-
 
 
 def compare_bets(row):
@@ -169,7 +162,3 @@ async def main_script():
 
     while True:
         await compare_circle(D2BY_TOKEN, BETS4PRO_SESSION)
-
-
-if __name__ == "__main__":
-    asyncio.run(update_rows())
