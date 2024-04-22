@@ -102,6 +102,7 @@ async def create_bet_v2(bet_data: dict, match, bet_types: list):
             d2by_id=bet_data["id"],
             cfs={},
             probs={},
+            is_shown=False,
             value=None,
             side=None,
         )

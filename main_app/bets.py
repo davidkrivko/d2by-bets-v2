@@ -1,4 +1,4 @@
-from sqlalchemy import select, and_, or_
+from sqlalchemy import select, and_, or_, update
 from database.tables import Match
 from bets4pro.tables import Bets4ProBets, Bets4ProMatches
 from d2by.tables import D2BYBets, D2BYMatches
@@ -43,6 +43,7 @@ async def get_bets():
                     Bets4ProBets.type_id == D2BYBets.type_id,
                     Bets4ProBets.match_id == D2BYBets.match_id,
                     D2BYBets.is_active == True,
+                    D2BYBets.is_shown == False,
                 )
             )
             .outerjoin(
@@ -56,16 +57,33 @@ async def get_bets():
                         and_(Bets4ProBets.value == None, FanSportBets.value == None)),
                     Bets4ProBets.type_id == FanSportBets.type_id,
                     FanSportBets.is_active == True,
-                    Bets4ProBets.match_id == FanSportBets.match_id
+                    Bets4ProBets.match_id == FanSportBets.match_id,
                 )
             )
             .filter(
                 and_(
                     or_(D2BYBets.cfs != None, FanSportBets.cfs != None),
-                    Bets4ProBets.is_active == True
+                    Bets4ProBets.is_active == True,
+                    Bets4ProBets.is_shown == False
                 )
             )
         )
 
         result = await session.execute(stmt)
         return result.fetchall()
+
+
+async def is_shown_true(ids, table):
+    async with async_session() as session:
+        stmt = update(table).where(table.id.in_(ids)).values(is_shown=True)
+
+        await session.execute(stmt)
+        await session.commit()
+
+
+async def is_shown_false(table):
+    async with async_session() as session:
+        stmt = update(table).where(True).values(is_shown=False)
+
+        await session.execute(stmt)
+        await session.commit()

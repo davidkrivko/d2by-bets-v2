@@ -10,7 +10,7 @@ async def send_telegram_message(message):
     data = {"chat_id": CHAT_ID, "text": message, "parse_mode": "MarkdownV2"}
 
     async with aiohttp.ClientSession() as session:
-        async with session.post(telegram_url, data=data) as response:
+        async with session.post(telegram_url, data=data, ssl=False) as response:
             t = await response.text()
             return t
 
@@ -46,3 +46,5 @@ async def send_match_to_telegram(bets_data):
         f"[Bets4PRO]({bet_data['bets4pro_url']}): **{bet_data['bets4pro_cfs']}**\n"
     )
     await send_telegram_message(message)
+
+    return bets_data["bet_id"]
