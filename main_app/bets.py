@@ -56,7 +56,7 @@ async def get_bets():
                     or_(Bets4ProBets.value == FanSportBets.value,
                         and_(Bets4ProBets.value == None, FanSportBets.value == None)),
                     Bets4ProBets.type_id == FanSportBets.type_id,
-                    FanSportBets.is_active == True,
+                    # FanSportBets.is_active == True,
                     Bets4ProBets.match_id == FanSportBets.match_id,
                 )
             )
