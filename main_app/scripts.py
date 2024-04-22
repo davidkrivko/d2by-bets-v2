@@ -2,11 +2,16 @@ import asyncio
 import datetime
 import json
 import os
-import warnings
 
 import numpy as np
 import pandas as pd
 from simplegmail import Gmail
+
+if os.environ.get('UBUNTU', None) is not None:
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    parent_dir = os.path.dirname(script_dir)
+
+    os.chdir(parent_dir)
 
 from bets4pro.login import login
 from bets4pro.tables import Bets4ProBets
@@ -20,8 +25,6 @@ from d2by.scripts import update_bets as update_bets_d2by, update_matches as upda
 from main_app.matches import delete_old_matches
 from telegram import send_match_to_telegram
 
-
-warnings.filterwarnings("ignore")
 
 
 def compare_bets(row):
