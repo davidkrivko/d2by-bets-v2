@@ -137,10 +137,12 @@ async def compare_circle(d2by_token, bets4pro_token):
     bets = await get_good_bets()
 
     tasks = []
-    for name, bets in bets.groupby(["site"]):
-        tasks.append(make_bets_on_web_sites(bets, name[0], d2by_token, bets4pro_token))
 
-    await asyncio.gather(*tasks)
+    if bets is not None:
+        for name, bets in bets.groupby(["site"]):
+            tasks.append(make_bets_on_web_sites(bets, name[0], d2by_token, bets4pro_token))
+
+        await asyncio.gather(*tasks)
 
     end_at = datetime.datetime.now()
     print(end_at - start_at)
