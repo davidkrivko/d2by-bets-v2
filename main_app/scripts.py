@@ -119,6 +119,8 @@ async def make_bets_on_web_sites(group, site, d2by_token, bets4pro_token):
 async def update_rows():
     i = 0
     while True:
+        start_at = datetime.datetime.now()
+
         tasks = [update_bets_bets4pro(), update_bets_d2by()]
 
         if i == 1000:
@@ -129,6 +131,9 @@ async def update_rows():
 
         await asyncio.gather(*tasks)
         i += 1
+
+        end_at = datetime.datetime.now()
+        print("Update rows: ", end_at - start_at)
 
 
 async def compare_circle(d2by_token, bets4pro_token):
@@ -145,7 +150,7 @@ async def compare_circle(d2by_token, bets4pro_token):
         await asyncio.gather(*tasks)
 
     end_at = datetime.datetime.now()
-    print(end_at - start_at)
+    print("Compare bets: ", end_at - start_at)
 
 
 async def main_script():

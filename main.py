@@ -1,10 +1,9 @@
 import asyncio
 from dotenv import load_dotenv
 
-
 load_dotenv()
 
-# from database.utils import create_all_tables
+from database.utils import create_all_tables
 from main_app.scripts import main_script
 
 
