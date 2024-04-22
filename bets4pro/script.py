@@ -32,7 +32,8 @@ async def update_matches():
             unique_matches.append(match)
             teams.add(m_teams)
 
-    await save_match_data(unique_matches)
+    if len(unique_matches) > 0:
+        await save_match_data(unique_matches)
 
 
 async def update_bets():
@@ -43,7 +44,8 @@ async def update_bets():
     bets = await asyncio.gather(*tasks)
     bets = list(itertools.chain(*bets))
 
-    await save_bets(list(bets), Bets4ProBets)
+    if len(bets) > 0:
+        await save_bets(list(bets), Bets4ProBets)
 
 
 if __name__ == "__main__":

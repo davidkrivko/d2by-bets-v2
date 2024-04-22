@@ -18,7 +18,8 @@ async def update_matches():
             uni_matches.append(match)
             uni_teams.remove((match["team_1"], match["team_2"]))
 
-    await save_match_data(list(uni_matches))
+    if len(uni_matches) > 0:
+        await save_match_data(list(uni_matches))
 
 
 async def update_bets():
@@ -31,7 +32,8 @@ async def update_bets():
     bets_data = list(itertools.chain(*bets))
     bets_data = [bet_data for bet_data in bets_data if bet_data is not None]
 
-    await save_bets(bets_data, D2BYBets)
+    if len(bets_data) > 0:
+        await save_bets(bets_data, D2BYBets)
 
 
 if __name__ == "__main__":
