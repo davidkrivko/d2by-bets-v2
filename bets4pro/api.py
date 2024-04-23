@@ -76,6 +76,7 @@ async def get_match_bets(match, bet_types):
                         "side": side,
                         "value": value,
                         "bets4pro_name": b_type,
+                        "is_shown": False,
                     }
                     bet_data["hash"] = jwt.encode(bet_data, SECRET_KEY, algorithm='HS256')
                     bet_data["is_active"] = is_active

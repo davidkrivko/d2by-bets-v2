@@ -42,6 +42,7 @@ class Bets4ProBets(Base):
     match_id = Column(Integer, ForeignKey('matches.id', ondelete="CASCADE"))
     is_live = Column(Boolean)
     is_active = Column(Boolean)
+    is_shown = Column(Boolean)
     bets4pro_name = Column(String)
     hash = Column(String)
 

@@ -8,12 +8,15 @@ import pandas as pd
 from simplegmail import Gmail
 
 from bets4pro.login import login
+from bets4pro.tables import Bets4ProBets
 from d2by.api import make_bet as d2by_make_bet
 from bets4pro.api import make_bet as bets4pro_make_bet
 from d2by.login import get_token
-from main_app.bets import get_bets
+from d2by.tables import D2BYBets
+from main_app.bets import get_bets, is_shown_true, is_shown_false
 from bets4pro.script import update_bets as update_bets_bets4pro, update_matches as update_matches_bets4pro
 from d2by.scripts import update_bets as update_bets_d2by, update_matches as update_matches_d2by
+from main_app.matches import delete_old_matches
 from telegram import send_match_to_telegram
 
 
@@ -85,7 +88,8 @@ async def make_bets_on_web_sites(group, site, d2by_token, bets4pro_token):
             # tasks.append(bets4pro_make_bet(bet, bets4pro_token))
             tasks.append(send_match_to_telegram(bet))
 
-        await asyncio.gather(*tasks)
+        ids = await asyncio.gather(*tasks)
+        await is_shown_true(ids, Bets4ProBets)
     elif site == "d2by":
         bets = []
         tasks = []
@@ -103,17 +107,29 @@ async def make_bets_on_web_sites(group, site, d2by_token, bets4pro_token):
             # bets.append(data)
             tasks.append(send_match_to_telegram(bet))
 
-        await asyncio.gather(*tasks)
+        ids = await asyncio.gather(*tasks)
+        await is_shown_true(ids, D2BYBets)
         # await d2by_make_bet(d2by_token, bets)
 
 
-async def add_rows():
-    start_at = datetime.datetime.now()
-    await asyncio.gather(*[update_matches_d2by(), update_matches_bets4pro()])
-    await asyncio.gather(*[update_bets_bets4pro(), update_bets_d2by()])
-    end_at = datetime.datetime.now()
+async def update_rows():
+    i = 0
+    while True:
+        start_at = datetime.datetime.now()
 
-    print(end_at - start_at)
+        tasks = [update_bets_bets4pro(), update_bets_d2by()]
+
+        if i == 1000:
+            tasks.extend([update_matches_d2by(), update_matches_bets4pro(), delete_old_matches()])
+            i = 0
+        elif i % 100 == 0:
+            tasks.extend([is_shown_false(D2BYBets), is_shown_false(Bets4ProBets)])
+
+        await asyncio.gather(*tasks)
+        i += 1
+
+        end_at = datetime.datetime.now()
+        print("Update rows: ", end_at - start_at)
 
 
 async def compare_circle(d2by_token, bets4pro_token):
@@ -122,13 +138,15 @@ async def compare_circle(d2by_token, bets4pro_token):
     bets = await get_good_bets()
 
     tasks = []
-    for name, bets in bets.groupby(["site"]):
-        tasks.append(make_bets_on_web_sites(bets, name[0], d2by_token, bets4pro_token))
 
-    await asyncio.gather(*tasks)
+    if bets is not None:
+        for name, bets in bets.groupby(["site"]):
+            tasks.append(make_bets_on_web_sites(bets, name[0], d2by_token, bets4pro_token))
+
+        await asyncio.gather(*tasks)
 
     end_at = datetime.datetime.now()
-    print(end_at - start_at)
+    print("Compare bets: ", end_at - start_at)
 
 
 async def main_script():
@@ -142,8 +160,5 @@ async def main_script():
     BETS4PRO_SESSION = None
     D2BY_TOKEN = None
 
-    await compare_circle(D2BY_TOKEN, BETS4PRO_SESSION)
-
-
-if __name__ == "__main__":
-    asyncio.run(main_script())
+    while True:
+        await compare_circle(D2BY_TOKEN, BETS4PRO_SESSION)

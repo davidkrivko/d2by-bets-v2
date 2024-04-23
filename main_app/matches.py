@@ -21,7 +21,7 @@ async def get_matches():
 
 
 async def delete_old_matches():
-    delete_time = datetime.now() - timedelta(days=1)
+    delete_time = datetime.now() - timedelta(hours=7)
 
     async with async_session() as session:
         try:

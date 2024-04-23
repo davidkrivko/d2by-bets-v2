@@ -41,6 +41,7 @@ class D2BYBets(Base):
     value = Column(Float, nullable=True)
     side = Column(Integer, nullable=True)
     map = Column(Integer, nullable=True)
+    is_shown = Column(Boolean)
     type_id = Column(Integer, ForeignKey('bets_type.id', ondelete="CASCADE"))
     match_id = Column(Integer, ForeignKey('matches.id', ondelete="CASCADE"))
     d2by_id = Column(String)
