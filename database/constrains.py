@@ -21,7 +21,7 @@ CREATE OR REPLACE FUNCTION insert_into_site_table()
 RETURNS TRIGGER AS $$
 BEGIN
     IF NEW.additional_data->>'site' = 'bets4pro' THEN
-        INSERT INTO bets4pro_matches (match_id, team_1, team_2, start_at, is_live, is_reverse, url)
+        INSERT INTO bets4pro_matches (match_id, team_1, team_2, start_at, is_live, is_reverse, url, bets4pro_id)
         VALUES (
             NEW.id,
             NEW.team_1,
@@ -29,7 +29,8 @@ BEGIN
             NEW.start_at,
             (NEW.additional_data->>'is_live')::bool,
             (NEW.additional_data->>'is_reverse')::bool,
-            (NEW.additional_data->>'url')::varchar
+            (NEW.additional_data->>'url')::varchar,
+            (NEW.additional_data->>'bets4pro_id')::varchar
         )
         ON CONFLICT (match_id) DO UPDATE
         SET start_at = EXCLUDED.start_at,

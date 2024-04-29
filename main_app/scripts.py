@@ -122,8 +122,6 @@ async def update_rows():
         if i == 1000:
             tasks.extend([update_matches_d2by(), update_matches_bets4pro(), delete_old_matches()])
             i = 0
-        elif i % 100 == 0:
-            tasks.extend([is_shown_false(D2BYBets), is_shown_false(Bets4ProBets)])
 
         await asyncio.gather(*tasks)
         i += 1
