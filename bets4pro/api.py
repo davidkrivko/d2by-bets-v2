@@ -57,7 +57,8 @@ async def get_match_bets(match, bet_types):
                             "1": round(1 + bet["team_2_cof"], 3),
                             "2": round(1 + bet["team_1_cof"], 3),
                         }
-                        side = 1 if side == 2 else 2
+                        if 'hc' in b_type:
+                            side = 1 if side == 2 else 2
 
                     is_live = True if str(bet["live"]) == "1" else False
 
