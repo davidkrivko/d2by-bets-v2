@@ -141,10 +141,16 @@ async def get_html_matches():
     soup = BeautifulSoup(html_str, 'html.parser')
 
     live_block = soup.find(class_='is_live')
-    live_blocks = live_block.find_all(class_='main-content__item_bottom')
+    if live_block is not None:
+        live_blocks = live_block.find_all(class_='main-content__item_bottom')
+    else:
+        live_blocks = []
 
     upcoming_block = soup.find(class_='main-content__left_block-two')
-    upcoming_blocks = upcoming_block.find_all(class_='main-content__item_bottom')
+    if upcoming_block is not None:
+        upcoming_blocks = upcoming_block.find_all(class_='main-content__item_bottom')
+    else:
+        upcoming_blocks = []
 
     return live_blocks, upcoming_blocks
 
