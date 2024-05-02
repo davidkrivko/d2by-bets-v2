@@ -1,5 +1,6 @@
 from sqlalchemy import select, and_, or_, update
-from database.tables import Match
+from sqlalchemy.dialects.postgresql import insert
+from database.tables import Match, BetsHistory
 from bets4pro.tables import Bets4ProBets, Bets4ProMatches
 from d2by.tables import D2BYBets, D2BYMatches
 from database.connection import async_session
@@ -13,6 +14,7 @@ async def get_bets():
                 Match.id,
                 Match.team_1,
                 Match.team_2,
+                Match.start_at,
                 Bets4ProBets.cfs,
                 D2BYBets.cfs,
                 FanSportBets.cfs,
@@ -87,3 +89,17 @@ async def is_shown_false(table):
 
         await session.execute(stmt)
         await session.commit()
+
+
+async def save_history(data: list):
+    async with async_session() as session:
+        try:
+            stmt = insert(BetsHistory).values(data)
+            on_conflict_stmt = stmt.on_conflict_do_update(
+                constraint='bets_history_unique_constrain',
+                set_={k.name: getattr(stmt.excluded, k.name) for k in BetsHistory.__table__.columns if k.name != 'id'}
+            )
+            await session.execute(on_conflict_stmt)
+            await session.commit()
+        except Exception as e:
+            print(e)

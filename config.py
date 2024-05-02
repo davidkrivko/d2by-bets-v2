@@ -37,6 +37,9 @@ CHAT_ID = os.environ.get("CHAT_ID")
 USERNAME = os.environ.get("LOGIN_USERNAME")
 PASSWORD = os.environ.get("LOGIN_PASSWORD")
 
+BETS4PRO_USERNAME = os.environ.get("BETS4PRO_LOGIN")
+BETS4PRO_PASSWORD = os.environ.get("BETS4PRO_PASSWORD")
+
 IS_ALL_MATCHES = bool(os.environ.get("IS_ALL_MATCHES", 0))
 
 DEFAULT_D2BY_HEADERS = {

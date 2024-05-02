@@ -13,7 +13,7 @@ from d2by.api import make_bet as d2by_make_bet
 from bets4pro.api import make_bet as bets4pro_make_bet
 from d2by.login import get_token
 from d2by.tables import D2BYBets
-from main_app.bets import get_bets, is_shown_true, is_shown_false
+from main_app.bets import get_bets, is_shown_true, save_history
 from bets4pro.script import update_bets as update_bets_bets4pro, update_matches as update_matches_bets4pro
 from d2by.scripts import update_bets as update_bets_d2by, update_matches as update_matches_d2by
 from main_app.matches import delete_old_matches
@@ -58,7 +58,7 @@ async def get_good_bets():
     bets = await get_bets()
 
     columns = [
-        "match_id", "team_1", "team_2",
+        "match_id", "team_1", "team_2", "start_at",
         "bets4pro_cfs", "d2by_cfs",
         "fan_cfs", "bets4pro_id", "d2by_id",
         "fan_id", "value", "side",
@@ -71,6 +71,23 @@ async def get_good_bets():
         data=bets
     )
 
+    # start_at = pd.to_datetime(datetime.datetime.now() - datetime.timedelta(seconds=30)) - datetime.timedelta(hours=2)
+    # end_at = pd.to_datetime(datetime.datetime.now() + datetime.timedelta(minutes=1)) - datetime.timedelta(hours=2)
+    #
+    # live_f = bets_df["bets4pro_bet_name"].isin(["live_match", "live_game1", "live_game2", "live_game3"])
+    # live_df = bets_df[live_f]
+    #
+    # bets_df["start_at"] = pd.to_datetime(bets_df["start_at"])
+    #
+    # start_at_f = bets_df["start_at"] > start_at
+    # end_at_f = bets_df["start_at"] < end_at
+    # before_df = bets_df[~live_f & start_at_f & end_at_f]
+    #
+    # bets_df = pd.concat(
+    #     [live_df, before_df],
+    #     axis=0
+    # ).reset_index(drop=True)
+
     # Apply the function row-wise
     result_df = bets_df.apply(compare_bets, axis=1)
 
@@ -82,34 +99,33 @@ async def get_good_bets():
 
 
 async def make_bets_on_web_sites(group, site, d2by_token, bets4pro_token):
+    ids = []
+    tasks = []
+
     if site == "bets4pro":
-        tasks = []
         for _, bet in group.iterrows():
-            # tasks.append(bets4pro_make_bet(bet, bets4pro_token))
-            tasks.append(send_match_to_telegram(bet))
+            tasks.append(bets4pro_make_bet(bet, bets4pro_token, bet["bet_id"]))
 
+            ids.append(bet["bet_id"])
         ids = await asyncio.gather(*tasks)
-        await is_shown_true(ids, Bets4ProBets)
     elif site == "d2by":
-        bets = []
-        tasks = []
         for _, bet in group.iterrows():
-            # prob_data = json.loads(bet["d2by_probs"])
-            # prob_data = prob_data[bet["bet"]]
-            # data = {
-            #     "amount": 1,
-            #     "coinType": "GOLD",
-            #     "market": bet["d2by_true_id"],
-            #     "type": "SINGLE",
-            #     "currentRate": prob_data["prob"],
-            #     "selectPosition": prob_data["position"],
-            # }
-            # bets.append(data)
-            tasks.append(send_match_to_telegram(bet))
+            prob_data = json.loads(bet["d2by_probs"])
+            prob_data = prob_data[bet["bet"]]
+            data = {
+                "amount": 1,
+                "coinType": "GOLD",
+                "market": bet["d2by_true_id"],
+                "type": "SINGLE",
+                "currentRate": prob_data["prob"],
+                "selectPosition": prob_data["position"],
+            }
+            tasks.append(d2by_make_bet(d2by_token, [data], bet["bet_id"]))
 
+            ids.append(bet["bet_id"])
         ids = await asyncio.gather(*tasks)
-        await is_shown_true(ids, D2BYBets)
-        # await d2by_make_bet(d2by_token, bets)
+
+    return {"site": site, "ids": ids}
 
 
 async def update_rows():
@@ -119,7 +135,9 @@ async def update_rows():
             start_at = datetime.datetime.now()
 
         tasks = [update_bets_bets4pro(), update_bets_d2by()]
-        if i == 10:
+
+        i += 1
+        if i == 100:
             end_at = datetime.datetime.now()
             i = 0
             print("Compare circle: ", end_at - start_at)
@@ -127,19 +145,43 @@ async def update_rows():
             tasks.extend([update_matches_d2by(), update_matches_bets4pro(), delete_old_matches()])
 
         await asyncio.gather(*tasks)
-        i += 1
 
 
 async def compare_circle(d2by_token, bets4pro_token):
-    bets = await get_good_bets()
+    all_bets = await get_good_bets()
 
     tasks = []
 
-    if bets is not None:
-        for name, bets in bets.groupby(["site"]):
+    if all_bets is not None:
+        for name, bets in all_bets.groupby(["site"]):
             tasks.append(make_bets_on_web_sites(bets, name[0], d2by_token, bets4pro_token))
 
-        await asyncio.gather(*tasks)
+        bets_data = await asyncio.gather(*tasks)
+
+        for bet in bets_data:
+            if bet["site"] == "bets4pro":
+                table = Bets4ProBets
+            elif bet["site"] == "d2by":
+                table = D2BYBets
+            else:
+                table = None
+
+            bets_indexs = ['site', 'value', 'bet', 'team_1', 'team_2', 'start_at', 'bets4pro_cfs', 'd2by_cfs',
+                           'fan_cfs',
+                           'side', 'map', 'type_id', 'd2by_url', 'bets4pro_url']
+
+            save_bets = all_bets[(all_bets["site"] == bet["site"]) & (all_bets["bet_id"].isin(bet["ids"]))]
+
+            sb = save_bets.loc[:, bets_indexs]
+            sb.loc[sb["side"].isna(), "side"] = -1
+            sb.loc[sb["map"].isna(), "map"] = -1
+            sb = sb.to_dict(orient="records")
+
+            await is_shown_true(bet["ids"], table)
+            tasks = [save_history(sb)]
+            tasks.extend([send_match_to_telegram(bet) for _, bet in save_bets.iterrows()])
+
+            await asyncio.gather(*tasks)
 
 
 async def main_script():
@@ -157,9 +199,11 @@ async def main_script():
     while True:
         if i == 0:
             start_at = datetime.datetime.now()
+
+        await compare_circle(D2BY_TOKEN, BETS4PRO_SESSION)
+        i += 1
+
         if i == 1000:
             end_at = datetime.datetime.now()
             i = 0
-            print("Compare circle: ", end_at - start_at)
-        await compare_circle(D2BY_TOKEN, BETS4PRO_SESSION)
-        i += 1
+            print("Compare circle 1000: ", end_at - start_at)

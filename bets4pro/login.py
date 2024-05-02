@@ -1,5 +1,4 @@
 import os
-import requests
 
 from telnetlib import EC
 
@@ -9,10 +8,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from config import DEFAULT_BETS4PRO_HEADERS
+from config import DEFAULT_BETS4PRO_HEADERS, BETS4PRO_USERNAME, BETS4PRO_PASSWORD
 
 CHROME_OPTIONS = webdriver.ChromeOptions()
-
 
 CHROME_OPTIONS.add_argument("--window-size=1300,800")
 if os.environ.get("CHROME_OPTIONS") == "true":
@@ -23,7 +21,7 @@ if os.environ.get("CHROME_OPTIONS") == "true":
 
 
 def login():
-    driver = webdriver.Chrome()
+    driver = webdriver.Chrome(options=CHROME_OPTIONS)
     driver.get("https://bets4.org")
 
     wait = WebDriverWait(driver, 10)
@@ -60,8 +58,8 @@ def login():
     submit_button = driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
 
     # Input your username and password
-    username_input.send_keys("shashka_sidr")
-    password_input.send_keys("HfpHwp20qkx.Pq!K")
+    username_input.send_keys(BETS4PRO_USERNAME)
+    password_input.send_keys(BETS4PRO_PASSWORD)
 
     # Click the submit button
     submit_button.click()
@@ -82,6 +80,7 @@ def login():
         if cookie["name"] == "PHPSESSID":
             token = cookie["value"]
 
+    print("Bets4PRO login success")
     return {"cookie": f"PHPSESSID={token}; lang=eng;"}
 
 
@@ -91,7 +90,3 @@ def create_new_token():
     DEFAULT_BETS4PRO_HEADERS.update(new_token)
 
     return DEFAULT_BETS4PRO_HEADERS
-
-
-if __name__ == "__main__":
-    cookie = login()

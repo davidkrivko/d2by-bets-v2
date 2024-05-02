@@ -1,4 +1,7 @@
 sql = """
+ALTER TABLE bets_history
+ADD CONSTRAINT bets_history_unique_constrain UNIQUE (team_1, team_2, map, side, value, site, bet, type_id);
+
 ALTER TABLE bets4pro_bets
 ADD CONSTRAINT bets4pro_bets_unique_constrain UNIQUE (hash);
 

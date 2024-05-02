@@ -155,7 +155,7 @@ async def get_html_matches():
     return live_blocks, upcoming_blocks
 
 
-async def make_bet(bet_data, headers):
+async def make_bet(bet_data, headers, bet_id):
     bet_name = bet_data["bets4pro_bet_name"]
     side_name = "team_" + bet_data["bet"]
     tournament = bet_data["bets4pro_match_id"]
@@ -179,13 +179,13 @@ async def make_bet(bet_data, headers):
 
             if response.status == 500:  # token is not valid
                 create_new_token()
-                return "Error"
+                return 0
             else:
                 if "Error" in text:
-                    return "Error"
+                    return 0
                 else:
                     response = json.loads(text)
 
                     response = response["response"]
                     if response.get("return_url"):
-                        return "Done"
+                        return bet_id

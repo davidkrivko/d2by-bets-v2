@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, TIMESTAMP, JSON
+from sqlalchemy import Column, Integer, String, TIMESTAMP, JSON, Numeric, ForeignKey
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
 from database.connection import Base
@@ -38,3 +39,29 @@ class BetsType(Base):
     bets4pro_bets = relationship("bets4pro.tables.Bets4ProBets")
     d2by_bets = relationship("d2by.tables.D2BYBets")
     fansport_bets = relationship("fan_sport.tables.FanSportBets")
+
+
+class BetsHistory(Base):
+    __tablename__ = 'bets_history'
+    __table_args__ = {'extend_existing': True}
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    team_1 = Column(String)
+    team_2 = Column(String)
+    start_at = Column(TIMESTAMP)
+
+    map = Column(Integer, nullable=True)
+    side = Column(Integer, nullable=True)
+    value = Column(Numeric, nullable=True)
+    type_id = Column(Integer)
+
+    bets4pro_cfs = Column(JSONB, default={})
+    d2by_cfs = Column(JSONB, default={})
+    fan_cfs = Column(JSONB, default={})
+    bet = Column(String)
+    site = Column(String)
+
+    d2by_url = Column(String)
+    bets4pro_url = Column(String)
+    d2by_type = Column(String, nullable=True)
