@@ -6,7 +6,7 @@ import aiohttp
 from bs4 import BeautifulSoup
 
 from bets4pro.login import create_new_token
-from config import SECRET_KEY, DEFAULT_BETS4PRO_HEADERS
+from config import SECRET_KEY, DEFAULT_BETS4PRO_HEADERS, BETS4PRO_DELTA
 from main_app.utils import teams_right_order
 from main_app.utils import update_team_name
 
@@ -119,7 +119,7 @@ def get_match_data(block, is_live=False):
     match_data = {
         "team_1": update_team_name(team_1),
         "team_2": update_team_name(team_2),
-        "start_at": start_at,
+        "start_at": start_at + datetime.timedelta(hours=BETS4PRO_DELTA),
         "additional_data": {
             "bets4pro_id": match_id,
             "is_live": is_live,

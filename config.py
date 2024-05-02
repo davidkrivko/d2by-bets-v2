@@ -11,6 +11,7 @@ DB_HOST = os.environ.get("DB_HOST")
 DB_PORT = os.environ.get("DB_PORT")
 
 D2BY_TIME_DELTA = int(os.environ.get("D2BY_TIME_DELTA", 0))
+BETS4PRO_DELTA = int(os.environ.get("BETS4PRO_DELTA", 0))
 FAN_SPORT_DELTA = int(os.environ.get("FAN_SPORT_DELTA", 0))
 SENDING_MESSAGES_DELTA = int(os.environ.get("SENDING_MESSAGES_DELTA", 0))
 
