@@ -71,22 +71,22 @@ async def get_good_bets():
         data=bets
     )
 
-    # start_at = pd.to_datetime(datetime.datetime.now() - datetime.timedelta(seconds=30)) - datetime.timedelta(hours=2)
-    # end_at = pd.to_datetime(datetime.datetime.now() + datetime.timedelta(minutes=1)) - datetime.timedelta(hours=2)
-    #
-    # live_f = bets_df["bets4pro_bet_name"].isin(["live_match", "live_game1", "live_game2", "live_game3"])
-    # live_df = bets_df[live_f]
-    #
-    # bets_df["start_at"] = pd.to_datetime(bets_df["start_at"])
-    #
-    # start_at_f = bets_df["start_at"] > start_at
-    # end_at_f = bets_df["start_at"] < end_at
-    # before_df = bets_df[~live_f & start_at_f & end_at_f]
-    #
-    # bets_df = pd.concat(
-    #     [live_df, before_df],
-    #     axis=0
-    # ).reset_index(drop=True)
+    start_at = pd.to_datetime(datetime.datetime.now() - datetime.timedelta(seconds=30)) - datetime.timedelta(hours=2)
+    end_at = pd.to_datetime(datetime.datetime.now() + datetime.timedelta(minutes=1)) - datetime.timedelta(hours=2)
+
+    live_f = bets_df["bets4pro_bet_name"].isin(["live_match", "live_game1", "live_game2", "live_game3"])
+    live_df = bets_df[live_f]
+
+    bets_df["start_at"] = pd.to_datetime(bets_df["start_at"])
+
+    start_at_f = bets_df["start_at"] > start_at
+    end_at_f = bets_df["start_at"] < end_at
+    before_df = bets_df[~live_f & start_at_f & end_at_f]
+
+    bets_df = pd.concat(
+        [live_df, before_df],
+        axis=0
+    ).reset_index(drop=True)
 
     # Apply the function row-wise
     result_df = bets_df.apply(compare_bets, axis=1)
@@ -185,15 +185,12 @@ async def compare_circle(d2by_token, bets4pro_token):
 
 
 async def main_script():
-    # d2by_username = os.environ.get("D2BY_USERNAME")
-    # d2by_password = os.environ.get("D2BY_PASSWORD")
-    # gmail = Gmail()
-    #
-    # BETS4PRO_SESSION = login()
-    # D2BY_TOKEN = get_token(d2by_username, d2by_password, gmail)
+    d2by_username = os.environ.get("D2BY_USERNAME")
+    d2by_password = os.environ.get("D2BY_PASSWORD")
+    gmail = Gmail()
 
-    BETS4PRO_SESSION = None
-    D2BY_TOKEN = None
+    BETS4PRO_SESSION = login()
+    D2BY_TOKEN = get_token(d2by_username, d2by_password, gmail)
 
     i = 0
     while True:
