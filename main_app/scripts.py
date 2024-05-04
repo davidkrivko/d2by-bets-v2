@@ -204,8 +204,6 @@ async def main_script():
     BETS4PRO_SESSION = login()
     D2BY_TOKEN = get_token(d2by_username, d2by_password, gmail)
 
-    D2BY_TOKEN = None
-
     i = 0
     while True:
         if i == 0:
