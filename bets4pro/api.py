@@ -159,27 +159,27 @@ async def make_bet(bet_data, headers, bet_id):
     bet_name = bet_data["bets4pro_bet_name"]
     side_name = "team_" + bet_data["bet"]
     tournament = bet_data["bets4pro_match_id"]
-    bet_cof = json.loads(bet_data["bets4pro_cfs"])[bet_data["bet"]] - 1
-    user_id = "76561199008104347"
+    bet_cof = str(round(json.loads(bet_data["bets4pro_cfs"])[bet_data["bet"]] - 1, 3))
     user_betcoin = 0.01
+
+    headers["referer"] = bet_data["bets4pro_url"]
 
     data = (f"team_{bet_name}={side_name}"
             f"&{side_name}_cof_{bet_name}={bet_cof}"
             f"&type={bet_name}"
             f"&tournament={tournament}"
             f"&user_betcoin={user_betcoin}"
-            f"&user_id={user_id}"
+            f"&user_id=76561198280476982"
             f"&button_name=place-bet")
 
     async with aiohttp.ClientSession() as session:
-        async with session.get(
+        async with session.post(
                 "https://bets4.org/engine/function/bet.php",
                 headers=headers, data=data, ssl=False) as response:
             text = await response.text()
 
             if response.status == 500:  # token is not valid
-                create_new_token()
-                return 0
+                return make_bet(bet_data, create_new_token(), bet_id)
             else:
                 if "Error" in text:
                     return 0

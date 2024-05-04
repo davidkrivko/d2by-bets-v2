@@ -46,7 +46,10 @@ def compare_bets(row):
 
     bet_data["bet_id"] = 0
     for id, bet in bet_data.iterrows():
-        bet_data.loc[id, "bet_id"] = row[f'{bet["site"]}_id']
+        if not row[f'{bet["site"]}_is_shown'] and bet["value"] < 2.8:
+            bet_data.loc[id, "bet_id"] = row[f'{bet["site"]}_id']
+
+    bet_data = bet_data[bet_data["bet_id"] != 0]
 
     for index, value in row.items():
         bet_data[index] = value if not isinstance(value, dict) else json.dumps(value)
@@ -62,9 +65,9 @@ async def get_good_bets():
         "bets4pro_cfs", "d2by_cfs",
         "fan_cfs", "bets4pro_id", "d2by_id",
         "fan_id", "value", "side",
-        "map", "type_id", "d2by_probs", "d2by_true_id",
-        "d2by_url", "bets4pro_bet_name", "bets4pro_url",
-        "bets4pro_match_id"
+        "map", "type_id", "d2by_probs", "d2by_true_id", "d2by_is_shown",
+        "d2by_url", "bets4pro_bet_name", "bets4pro_is_shown", "bets4pro_url",
+        "bets4pro_match_id", "bets4pro_is_reverse"
     ]
     bets_df = pd.DataFrame(
         columns=columns,
@@ -98,17 +101,26 @@ async def get_good_bets():
         return result_df
 
 
+def reverse_bets_bets4pro(row):
+    if row["bets4pro_is_reverse"]:
+        return "1" if row["bet"] == "2" else "2"
+    else:
+        return row["bet"]
+
+
 async def make_bets_on_web_sites(group, site, d2by_token, bets4pro_token):
     ids = []
     tasks = []
 
     if site == "bets4pro":
         for _, bet in group.iterrows():
+            group["bet"] = group.apply(lambda x: reverse_bets_bets4pro(x), axis=1)
             tasks.append(bets4pro_make_bet(bet, bets4pro_token, bet["bet_id"]))
 
             ids.append(bet["bet_id"])
         ids = await asyncio.gather(*tasks)
     elif site == "d2by":
+        pass
         for _, bet in group.iterrows():
             prob_data = json.loads(bet["d2by_probs"])
             prob_data = prob_data[bet["bet"]]
@@ -191,6 +203,8 @@ async def main_script():
 
     BETS4PRO_SESSION = login()
     D2BY_TOKEN = get_token(d2by_username, d2by_password, gmail)
+
+    D2BY_TOKEN = None
 
     i = 0
     while True:

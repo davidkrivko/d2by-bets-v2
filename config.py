@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
 DB_NAME = os.environ.get("DB_NAME")
 DB_USER = os.environ.get("DB_USER")
 DB_PASSWORD = os.environ.get("DB_PASS")
@@ -29,7 +28,6 @@ WORD_BLACK_LIST = [
     "vincere",
     "challengers",
 ]
-
 
 TELEGRAM_BOT = os.environ.get("TELEGRAM_BOT")
 CHAT_ID = os.environ.get("CHAT_ID")
@@ -65,16 +63,24 @@ DEFAULT_FAN_HEADERS = {
 }
 
 DEFAULT_BETS4PRO_HEADERS = {
+    "accept": "*/*",
+    "accept-language": "ru,en;q=0.9,en-GB;q=0.8,en-US;q=0.7",
     "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-    "sec-ch-ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+    "origin": "https://bets4.org",
+    "priority": "u=1, i",
+    "sec-ch-ua": '"Chromium";v="124", "Microsoft Edge";v="124", "Not-A.Brand";v="99"',
     "sec-ch-ua-mobile": "?0",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-                  "AppleWebKit/537.36 (KHTML, like Gecko)"
-                  "Chrome/124.0.0.0 Safari/537.36"
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                  "AppleWebKit/537.36 (KHTML, like Gecko) "
+                  "Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0",
+    "x-requested-with": "XMLHttpRequest"
 }
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
-
 
 # Error #4 - ставка не активна
 # Error #15 - нету денег

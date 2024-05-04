@@ -27,10 +27,13 @@ async def get_bets():
                 Bets4ProBets.type_id,
                 D2BYBets.probs,
                 D2BYBets.d2by_id,
+                D2BYBets.is_shown,
                 D2BYMatches.url,
                 Bets4ProBets.bets4pro_name,
+                Bets4ProBets.is_shown,
                 Bets4ProMatches.url,
                 Bets4ProMatches.bets4pro_id,
+                Bets4ProMatches.is_reverse,
             )
             .join(Bets4ProBets, Match.id == Bets4ProBets.match_id)
             .outerjoin(D2BYMatches, Match.id == D2BYMatches.match_id)
@@ -45,7 +48,6 @@ async def get_bets():
                     Bets4ProBets.type_id == D2BYBets.type_id,
                     Bets4ProBets.match_id == D2BYBets.match_id,
                     D2BYBets.is_active == True,
-                    D2BYBets.is_shown == False,
                 )
             )
             .outerjoin(
@@ -66,7 +68,6 @@ async def get_bets():
                 and_(
                     or_(D2BYBets.cfs != None, FanSportBets.cfs != None),
                     Bets4ProBets.is_active == True,
-                    Bets4ProBets.is_shown == False
                 )
             )
         )

@@ -81,12 +81,13 @@ def login():
             token = cookie["value"]
 
     print("Bets4PRO login success")
-    return {"cookie": f"PHPSESSID={token}; lang=eng;"}
+    DEFAULT_BETS4PRO_HEADERS.update({"cookie": f"PHPSESSID={token}; lang=ru;"})
+
+    return DEFAULT_BETS4PRO_HEADERS
 
 
 def create_new_token():
     new_token = login()
-    global DEFAULT_BETS4PRO_HEADERS
     DEFAULT_BETS4PRO_HEADERS.update(new_token)
 
     return DEFAULT_BETS4PRO_HEADERS
