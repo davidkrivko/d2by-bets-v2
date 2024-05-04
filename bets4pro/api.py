@@ -160,7 +160,7 @@ async def make_bet(bet_data, headers, bet_id):
     side_name = "team_" + bet_data["bet"]
     tournament = bet_data["bets4pro_match_id"]
     bet_cof = str(round(json.loads(bet_data["bets4pro_cfs"])[bet_data["bet"]] - 1, 3))
-    user_betcoin = 0.01
+    user_betcoin = 1.0
 
     headers["referer"] = bet_data["bets4pro_url"]
 
