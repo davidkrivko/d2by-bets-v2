@@ -181,11 +181,11 @@ async def make_bet(bet_data, headers, bet_id):
             if response.status == 500:  # token is not valid
                 return make_bet(bet_data, create_new_token(), bet_id)
             else:
-                if "Error" in text:
-                    return 0
-                else:
+                try:
                     response = json.loads(text)
 
                     response = response["response"]
                     if response.get("return_url"):
                         return bet_id
+                except:
+                    return 0
