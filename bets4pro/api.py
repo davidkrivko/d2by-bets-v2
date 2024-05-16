@@ -96,7 +96,8 @@ async def get_match_bets(match, bet_types):
                 for bet in all_bets:
                     if not bet["is_live"]:
                         bet["match_start_at"] = start_at
-
+                    else:
+                        bet["match_start_at"] = None
         return all_bets
 
 
