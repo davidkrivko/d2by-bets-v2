@@ -26,6 +26,15 @@ async def get_match_bets(match, bet_types):
                 for bet in bets:
                     b_type = bet["type"]
 
+                    if b_type == "match":
+                        start_at = (
+                            bet["timestamp_started"]
+                            if bet["timestamp_started"] != "0"
+                            else bet["timestamp_start"]
+                        )
+                        start_at = int(start_at)
+                        start_at = datetime.datetime.fromtimestamp(start_at)
+
                     type_id = None
                     for t in bet_types:
                         if b_type in str(t.bets4pro_type):
@@ -83,6 +92,10 @@ async def get_match_bets(match, bet_types):
                     bet_data["cfs"] = cfs_data
 
                     all_bets.append(bet_data)
+
+                for bet in all_bets:
+                    if not bet["is_live"]:
+                        bet["match_start_at"] = start_at
 
         return all_bets
 

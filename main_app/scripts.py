@@ -66,24 +66,24 @@ async def get_good_bets():
         "fan_cfs", "bets4pro_id", "d2by_id",
         "fan_id", "value", "side",
         "map", "type_id", "d2by_probs", "d2by_true_id", "d2by_is_shown",
-        "d2by_url", "bets4pro_bet_name", "bets4pro_is_shown", "bets4pro_url",
-        "bets4pro_match_id", "bets4pro_is_reverse"
+        "d2by_url", "bets4pro_bet_name", "bets4pro_is_shown", "bets4pro_match_start_at",
+        "bets4pro_url", "bets4pro_match_id", "bets4pro_is_reverse"
     ]
     bets_df = pd.DataFrame(
         columns=columns,
         data=bets
     )
 
-    start_at = pd.to_datetime(datetime.datetime.now() - datetime.timedelta(seconds=30)) - datetime.timedelta(hours=2)
-    end_at = pd.to_datetime(datetime.datetime.now() + datetime.timedelta(minutes=1)) - datetime.timedelta(hours=2)
+    start_at = pd.to_datetime(datetime.datetime.now() - datetime.timedelta(seconds=30))
+    end_at = pd.to_datetime(datetime.datetime.now() + datetime.timedelta(minutes=1))
 
     live_f = bets_df["bets4pro_bet_name"].isin(["live_match", "live_game1", "live_game2", "live_game3"])
     live_df = bets_df[live_f]
 
     bets_df["start_at"] = pd.to_datetime(bets_df["start_at"])
 
-    start_at_f = bets_df["start_at"] > start_at
-    end_at_f = bets_df["start_at"] < end_at
+    start_at_f = bets_df["bets4pro_match_start_at"] > start_at
+    end_at_f = bets_df["bets4pro_match_start_at"] < end_at
     before_df = bets_df[~live_f & start_at_f & end_at_f]
 
     bets_df = pd.concat(
@@ -101,11 +101,11 @@ async def get_good_bets():
         return result_df
 
 
-def reverse_bets_bets4pro(row):
-    if row["bets4pro_is_reverse"]:
-        return "1" if row["bet"] == "2" else "2"
+def reverse_bets_bets4pro(bet, is_reverse):
+    if is_reverse:
+        return "1" if bet == "2" else "2"
     else:
-        return row["bet"]
+        return bet
 
 
 async def make_bets_on_web_sites(group, site, d2by_token, bets4pro_token):
@@ -114,7 +114,7 @@ async def make_bets_on_web_sites(group, site, d2by_token, bets4pro_token):
 
     if site == "bets4pro":
         for _, bet in group.iterrows():
-            group["bet"] = group.apply(lambda x: reverse_bets_bets4pro(x), axis=1)
+            bet["bet"] = reverse_bets_bets4pro(bet["bet"], bet["bets4pro_is_reverse"])
             tasks.append(bets4pro_make_bet(bet, bets4pro_token, bet["bet_id"]))
 
             ids.append(bet["bet_id"])
@@ -197,12 +197,15 @@ async def compare_circle(d2by_token, bets4pro_token):
 
 
 async def main_script():
-    d2by_username = os.environ.get("D2BY_USERNAME")
-    d2by_password = os.environ.get("D2BY_PASSWORD")
-    gmail = Gmail()
+    # d2by_username = os.environ.get("D2BY_USERNAME")
+    # d2by_password = os.environ.get("D2BY_PASSWORD")
+    # gmail = Gmail()
+    #
+    # BETS4PRO_SESSION = login()
+    # D2BY_TOKEN = get_token(d2by_username, d2by_password, gmail)
 
-    BETS4PRO_SESSION = login()
-    D2BY_TOKEN = get_token(d2by_username, d2by_password, gmail)
+    BETS4PRO_SESSION = None
+    D2BY_TOKEN = None
 
     i = 0
     while True:

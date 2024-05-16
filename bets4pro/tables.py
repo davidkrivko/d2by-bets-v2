@@ -25,6 +25,7 @@ class Bets4ProMatches(Base):
     bets4pro_id = Column(String)
     match_id = Column(Integer, ForeignKey('matches.id', ondelete="CASCADE"))
     url = Column(String, nullable=True)
+    match_start_at = Column(TIMESTAMP, nullable=True)
 
     match = relationship("database.tables.Match", overlaps="bets4pro_matches")
 

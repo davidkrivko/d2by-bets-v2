@@ -31,6 +31,7 @@ async def get_bets():
                 D2BYMatches.url,
                 Bets4ProBets.bets4pro_name,
                 Bets4ProBets.is_shown,
+                Bets4ProBets.match_start_at,
                 Bets4ProMatches.url,
                 Bets4ProMatches.bets4pro_id,
                 Bets4ProMatches.is_reverse,
