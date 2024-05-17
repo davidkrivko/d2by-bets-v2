@@ -74,8 +74,8 @@ async def get_good_bets():
         data=bets
     )
 
-    start_at = (pd.to_datetime(datetime.datetime.now() - datetime.timedelta(minutes=1))) + datetime.timedelta(hours=2)
-    end_at = (pd.to_datetime(datetime.datetime.now() + datetime.timedelta(minutes=1))) + datetime.timedelta(hours=2)
+    start_at = (pd.to_datetime(datetime.datetime.now() - datetime.timedelta(seconds=30)))
+    end_at = (pd.to_datetime(datetime.datetime.now() + datetime.timedelta(minutes=1)))
 
     live_f = bets_df["bets4pro_bet_name"].isin(["live_match", "live_game1", "live_game2", "live_game3"])
     live_df = bets_df[live_f]
