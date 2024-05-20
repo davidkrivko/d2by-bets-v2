@@ -101,20 +101,12 @@ async def get_good_bets():
         return result_df
 
 
-def reverse_bets_bets4pro(bet, is_reverse):
-    if is_reverse:
-        return "1" if bet == "2" else "2"
-    else:
-        return bet
-
-
 async def make_bets_on_web_sites(group, site, d2by_token, bets4pro_token):
     ids = []
     tasks = []
 
     if site == "bets4pro":
         for _, bet in group.iterrows():
-            # bet["bet"] = reverse_bets_bets4pro(bet["bet"], bet["bets4pro_is_reverse"])
             tasks.append(bets4pro_make_bet(bet, bets4pro_token, bet["bet_id"]))
 
             ids.append(bet["bet_id"])
