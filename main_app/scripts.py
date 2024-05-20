@@ -114,7 +114,7 @@ async def make_bets_on_web_sites(group, site, d2by_token, bets4pro_token):
 
     if site == "bets4pro":
         for _, bet in group.iterrows():
-            bet["bet"] = reverse_bets_bets4pro(bet["bet"], bet["bets4pro_is_reverse"])
+            # bet["bet"] = reverse_bets_bets4pro(bet["bet"], bet["bets4pro_is_reverse"])
             tasks.append(bets4pro_make_bet(bet, bets4pro_token, bet["bet_id"]))
 
             ids.append(bet["bet_id"])
