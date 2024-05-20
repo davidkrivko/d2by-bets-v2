@@ -49,13 +49,13 @@ async def get_match_bets(match, bet_types):
 
                     if not match.is_reverse:
                         cfs_data = {
-                            "1": round(1 + bet["team_1_cof"], 3),
-                            "2": round(1 + bet["team_2_cof"], 3),
+                            "1": round(1 + float(bet["team_1_cof"]), 3),
+                            "2": round(1 + float(bet["team_2_cof"]), 3),
                         }
                     else:
                         cfs_data = {
-                            "1": round(1 + bet["team_2_cof"], 3),
-                            "2": round(1 + bet["team_1_cof"], 3),
+                            "1": round(1 + float(bet["team_2_cof"]), 3),
+                            "2": round(1 + float(bet["team_1_cof"]), 3),
                         }
                         if 'hc' in b_type:
                             side = 1 if side == 2 else 2
