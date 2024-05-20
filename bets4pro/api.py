@@ -175,7 +175,7 @@ async def make_bet(bet_data, headers, bet_id):
     bet_cof = str(round(json.loads(bet_data["bets4pro_cfs"])[bet_data["bet"]] - 1, 3))
     user_betcoin = 1.0
 
-    if bet_data.is_reverse:
+    if bet_data.bets4pro_is_reverse:
         side = "1" if bet_data["bet"] == "2" else "2"
         side_name = "team_" + side
     else:
