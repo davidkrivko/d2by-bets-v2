@@ -45,6 +45,7 @@ class Bets4ProBets(Base):
     is_shown = Column(Boolean)
     bets4pro_name = Column(String)
     hash = Column(String)
+    match_start_at = Column(TIMESTAMP, nullable=True)
 
     bet_type = relationship("database.tables.BetsType", overlaps="bets4pro_bets")
     match = relationship("database.tables.Match", overlaps="bets4pro_bets")

@@ -152,7 +152,7 @@ async def create_bet_v2(bet_data: dict, match, bet_types: list):
         return bet
 
 
-async def make_bet(auth_token, data):
+async def make_bet(auth_token, data, bet_id):
     headers = DEFAULT_D2BY_HEADERS
     headers["authorization"] = f"Bearer {auth_token['value']}"
 
@@ -165,9 +165,9 @@ async def make_bet(auth_token, data):
             response = json.loads(response)
 
             if response["meta"]["status"] == 200:
-                return {"status": "Success", "market": data}
+                return bet_id
             else:
-                return {"status": response["meta"]["internalMessage"]}
+                return 0
 
 
 async def get_balance(auth_token):

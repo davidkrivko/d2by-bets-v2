@@ -1,5 +1,6 @@
 from sqlalchemy import select, and_, or_, update
-from database.tables import Match
+from sqlalchemy.dialects.postgresql import insert
+from database.tables import Match, BetsHistory
 from bets4pro.tables import Bets4ProBets, Bets4ProMatches
 from d2by.tables import D2BYBets, D2BYMatches
 from database.connection import async_session
@@ -13,6 +14,7 @@ async def get_bets():
                 Match.id,
                 Match.team_1,
                 Match.team_2,
+                Match.start_at,
                 Bets4ProBets.cfs,
                 D2BYBets.cfs,
                 FanSportBets.cfs,
@@ -25,10 +27,14 @@ async def get_bets():
                 Bets4ProBets.type_id,
                 D2BYBets.probs,
                 D2BYBets.d2by_id,
+                D2BYBets.is_shown,
                 D2BYMatches.url,
                 Bets4ProBets.bets4pro_name,
+                Bets4ProBets.is_shown,
+                Bets4ProBets.match_start_at,
                 Bets4ProMatches.url,
                 Bets4ProMatches.bets4pro_id,
+                Bets4ProMatches.is_reverse,
             )
             .join(Bets4ProBets, Match.id == Bets4ProBets.match_id)
             .outerjoin(D2BYMatches, Match.id == D2BYMatches.match_id)
@@ -43,7 +49,6 @@ async def get_bets():
                     Bets4ProBets.type_id == D2BYBets.type_id,
                     Bets4ProBets.match_id == D2BYBets.match_id,
                     D2BYBets.is_active == True,
-                    D2BYBets.is_shown == False,
                 )
             )
             .outerjoin(
@@ -64,7 +69,6 @@ async def get_bets():
                 and_(
                     or_(D2BYBets.cfs != None, FanSportBets.cfs != None),
                     Bets4ProBets.is_active == True,
-                    Bets4ProBets.is_shown == False
                 )
             )
         )
@@ -87,3 +91,17 @@ async def is_shown_false(table):
 
         await session.execute(stmt)
         await session.commit()
+
+
+async def save_history(data: list):
+    async with async_session() as session:
+        try:
+            stmt = insert(BetsHistory).values(data)
+            on_conflict_stmt = stmt.on_conflict_do_update(
+                constraint='bets_history_unique_constrain',
+                set_={k.name: getattr(stmt.excluded, k.name) for k in BetsHistory.__table__.columns if k.name != 'id'}
+            )
+            await session.execute(on_conflict_stmt)
+            await session.commit()
+        except Exception as e:
+            print(e)

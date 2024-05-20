@@ -1,6 +1,6 @@
 import asyncio
 
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import TimeoutError as SQLTimeoutError
 

@@ -6,7 +6,7 @@ import aiohttp
 from bs4 import BeautifulSoup
 
 from bets4pro.login import create_new_token
-from config import SECRET_KEY, DEFAULT_BETS4PRO_HEADERS
+from config import SECRET_KEY, DEFAULT_BETS4PRO_HEADERS, BETS4PRO_DELTA
 from main_app.utils import teams_right_order
 from main_app.utils import update_team_name
 
@@ -25,6 +25,15 @@ async def get_match_bets(match, bet_types):
                 bets = bets["response"]["cofs"]
                 for bet in bets:
                     b_type = bet["type"]
+
+                    if b_type == "match":
+                        start_at = (
+                            bet["timestamp_started"]
+                            if bet["timestamp_started"] != "0"
+                            else bet["timestamp_start"]
+                        )
+                        start_at = int(start_at)
+                        start_at = datetime.datetime.fromtimestamp(start_at)
 
                     type_id = None
                     for t in bet_types:
@@ -84,6 +93,11 @@ async def get_match_bets(match, bet_types):
 
                     all_bets.append(bet_data)
 
+                for bet in all_bets:
+                    if not bet["is_live"]:
+                        bet["match_start_at"] = start_at
+                    else:
+                        bet["match_start_at"] = None
         return all_bets
 
 
@@ -119,7 +133,7 @@ def get_match_data(block, is_live=False):
     match_data = {
         "team_1": update_team_name(team_1),
         "team_2": update_team_name(team_2),
-        "start_at": start_at,
+        "start_at": start_at + datetime.timedelta(hours=BETS4PRO_DELTA),
         "additional_data": {
             "bets4pro_id": match_id,
             "is_live": is_live,
@@ -155,37 +169,37 @@ async def get_html_matches():
     return live_blocks, upcoming_blocks
 
 
-async def make_bet(bet_data, headers):
+async def make_bet(bet_data, headers, bet_id):
     bet_name = bet_data["bets4pro_bet_name"]
     side_name = "team_" + bet_data["bet"]
     tournament = bet_data["bets4pro_match_id"]
-    bet_cof = json.loads(bet_data["bets4pro_cfs"])[bet_data["bet"]] - 1
-    user_id = "76561199008104347"
-    user_betcoin = 0.01
+    bet_cof = str(round(json.loads(bet_data["bets4pro_cfs"])[bet_data["bet"]] - 1, 3))
+    user_betcoin = 1.0
+
+    headers["referer"] = bet_data["bets4pro_url"]
 
     data = (f"team_{bet_name}={side_name}"
             f"&{side_name}_cof_{bet_name}={bet_cof}"
             f"&type={bet_name}"
             f"&tournament={tournament}"
             f"&user_betcoin={user_betcoin}"
-            f"&user_id={user_id}"
+            f"&user_id=76561198280476982"
             f"&button_name=place-bet")
 
     async with aiohttp.ClientSession() as session:
-        async with session.get(
+        async with session.post(
                 "https://bets4.org/engine/function/bet.php",
                 headers=headers, data=data, ssl=False) as response:
             text = await response.text()
 
             if response.status == 500:  # token is not valid
-                create_new_token()
-                return "Error"
+                return make_bet(bet_data, create_new_token(), bet_id)
             else:
-                if "Error" in text:
-                    return "Error"
-                else:
+                try:
                     response = json.loads(text)
 
                     response = response["response"]
                     if response.get("return_url"):
-                        return "Done"
+                        return bet_id
+                except:
+                    return 0

@@ -24,7 +24,8 @@ def send_telegram_message_sync(message):
 
 
 def get_verification_code(time, gmail_client):
-    current_time = datetime.datetime.now().strftime("%Y/%m/%d")
+    current_time = datetime.datetime.now() - datetime.timedelta(days=1)
+    current_time = current_time.strftime("%Y/%m/%d")
 
     is_new = True
 
@@ -103,7 +104,7 @@ def get_token(username, password, gmail_client):
     password_input.send_keys(password)
 
     # Click the login button
-    time = datetime.datetime.utcnow()
+    time = datetime.datetime.utcnow() - datetime.timedelta(seconds=1)
 
     login_button = driver.find_element(By.CSS_SELECTOR, ".button.to-yellow-f9b80e")
     login_button.click()
