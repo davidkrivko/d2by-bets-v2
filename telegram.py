@@ -34,9 +34,9 @@ async def send_match_to_telegram(bets_data):
 
     bet_data = bets_data.apply(escape_markdown_v2)
 
-    side = f', on side {bet_data["side"]}' if bet_data['side'] != 'None' else ''
+    side = f', on side {bet_data["side"]}' if bet_data['side'] != 'nan' else ''
     value = f', with value {bet_data["value"]}' if bet_data['value'] != 'None' else ''
-    map = f', on map {bet_data["value"]}' if bet_data['map'] != 'nan' else ''
+    map = f', on map {bet_data["map"]}' if bet_data['map'] != 'None' else ''
 
     message = (
         f"**{bet_data['team_1']} \\- {bet_data['team_2']}**\n"
@@ -44,6 +44,7 @@ async def send_match_to_telegram(bets_data):
         f"name \\- {bet_data['bets4pro_bet_name']}{side}{value}{map}\n"
         f"[D2BY]({bet_data['d2by_url']}): **{bet_data['d2by_cfs']}**\n"
         f"[Bets4PRO]({bet_data['bets4pro_url']}): **{bet_data['bets4pro_cfs']}**\n"
+        f"**AMOUNT: {bet_data['amount']}**"
     )
     await send_telegram_message(message)
 

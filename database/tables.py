@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, TIMESTAMP, JSON, Numeric, ForeignKey
+from sqlalchemy import Column, Integer, String, TIMESTAMP, JSON, Numeric
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
@@ -65,3 +65,6 @@ class BetsHistory(Base):
     d2by_url = Column(String)
     bets4pro_url = Column(String)
     d2by_type = Column(String, nullable=True)
+
+    bet_cf = Column(Numeric)
+    amount = Column(Numeric)
