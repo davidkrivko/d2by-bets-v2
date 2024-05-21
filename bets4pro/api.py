@@ -7,8 +7,7 @@ from bs4 import BeautifulSoup
 
 from bets4pro.login import create_new_token
 from config import SECRET_KEY, DEFAULT_BETS4PRO_HEADERS, BETS4PRO_DELTA
-from main_app.utils import teams_right_order
-from main_app.utils import update_team_name
+from utils import teams_right_order, update_team_name
 
 
 async def get_match_bets(match, bet_types):
@@ -173,7 +172,7 @@ async def make_bet(bet_data, headers, bet_id):
     bet_name = bet_data["bets4pro_bet_name"]
     tournament = bet_data["bets4pro_match_id"]
     bet_cof = str(round(json.loads(bet_data["bets4pro_cfs"])[bet_data["bet"]] - 1, 3))
-    user_betcoin = 1.0
+    user_betcoin = bet_data["amount"]
 
     if bet_data.bets4pro_is_reverse:
         side = "1" if bet_data["bet"] == "2" else "2"

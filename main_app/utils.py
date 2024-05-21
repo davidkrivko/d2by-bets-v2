@@ -1,17 +1,130 @@
+import asyncio
+import datetime
+import json
 import re
 
+import numpy as np
+import pandas as pd
 from fuzzywuzzy import fuzz
 
-from config import WORD_BLACK_LIST, THRESHOLD
+from d2by.api import make_bet as d2by_make_bet
+from bets4pro.api import make_bet as bets4pro_make_bet
+from config import THRESHOLD
+from main_app.bets import get_bets
 
 
-def update_team_name(team: str):
-    team = team.strip().lower()
+def compare_bets(row):
+    bets4pro_cfs = row['bets4pro_cfs'] if row['bets4pro_cfs'] else {}
+    d2by_cfs = row['d2by_cfs'] if row['d2by_cfs'] else {}
+    fan_cfs = row['fan_cfs'] if row['fan_cfs'] else {}
 
-    for word in WORD_BLACK_LIST:
-        team = team.replace(word, "")
+    df_columns = ["bets4pro", "d2by", "fan"]
 
-    return team.strip()
+    cfs = [bets4pro_cfs, d2by_cfs, fan_cfs]
+    df_index = list(set().union(*cfs))
+
+    cfs_data = pd.DataFrame(cfs, index=df_columns).reindex(columns=df_index).values.tolist()
+    cfs_df = pd.DataFrame(cfs_data, index=df_columns, columns=df_index)
+
+    max_cfs = pd.concat([cfs_df.idxmax(), cfs_df.max()], axis=1)
+    max_cfs.rename(columns={0: "site", 1: "value"}, inplace=True)
+    cfs_df.replace(max_cfs["value"], np.nan, inplace=True)
+    average_values = cfs_df.mean(skipna=True)
+
+    compare = max_cfs["value"] / average_values
+    compare = compare > 1.15
+
+    bet_data = max_cfs[compare]
+    bet_data["bet"] = bet_data.index
+
+    bet_data["bet_id"] = 0
+    bet_data["cfs"] = {}
+    for id, bet in bet_data.iterrows():
+        if not row[f'{bet["site"]}_is_shown'] and bet["value"] < 2.8:
+            bet_data.loc[id, "bet_id"] = row[f'{bet["site"]}_id']
+            bet_data.at[id, "cfs"] = row[f'{bet["site"]}_cfs']
+
+    bet_data = bet_data[bet_data["bet_id"] != 0]
+
+    for index, value in row.items():
+        bet_data[index] = value if not isinstance(value, dict) else json.dumps(value)
+
+    return bet_data
+
+
+async def get_good_bets():
+    bets = await get_bets()
+
+    columns = [
+        "match_id", "team_1", "team_2", "start_at",
+        "bets4pro_cfs", "d2by_cfs",
+        "fan_cfs", "bets4pro_id", "d2by_id",
+        "fan_id", "value", "side",
+        "map", "type_id", "d2by_probs", "d2by_true_id", "d2by_is_shown",
+        "d2by_url", "bets4pro_bet_name", "bets4pro_is_shown", "bets4pro_match_start_at",
+        "bets4pro_url", "bets4pro_match_id", "bets4pro_is_reverse"
+    ]
+    bets_df = pd.DataFrame(
+        columns=columns,
+        data=bets
+    )
+
+    start_at = (pd.to_datetime(datetime.datetime.now() - datetime.timedelta(seconds=30)))
+    end_at = (pd.to_datetime(datetime.datetime.now() + datetime.timedelta(minutes=1)))
+
+    live_f = bets_df["bets4pro_bet_name"].isin(["live_match", "live_game1", "live_game2", "live_game3"])
+    live_df = bets_df[live_f]
+
+    bets_df["start_at"] = pd.to_datetime(bets_df["start_at"])
+
+    start_at_f = bets_df["bets4pro_match_start_at"] > start_at
+    end_at_f = bets_df["bets4pro_match_start_at"] < end_at
+    before_df = bets_df[~live_f & start_at_f & end_at_f]
+
+    bets_df = pd.concat(
+        [live_df, before_df],
+        axis=0
+    ).reset_index(drop=True)
+
+    # Apply the function row-wise
+    result_df = bets_df.apply(compare_bets, axis=1)
+
+    # Concatenate the resulting DataFrames
+    if result_df.shape[0] > 0:
+        result_df = pd.concat(result_df.tolist(), ignore_index=True)
+
+        return result_df
+
+
+async def make_bets_on_web_sites(group, site, d2by_token, bets4pro_token):
+    ids = []
+    tasks = []
+
+    if site == "bets4pro":
+        for _, bet in group.iterrows():
+            tasks.append(bets4pro_make_bet(bet, bets4pro_token, bet["bet_id"]))
+
+            ids.append(bet["bet_id"])
+        ids = await asyncio.gather(*tasks)
+    elif site == "d2by":
+        pass
+        for _, bet in group.iterrows():
+            prob_data = json.loads(bet["d2by_probs"])
+            prob_data = prob_data[bet["bet"]]
+            data = {
+                "amount": bet["amount"],
+                "coinType": "GOLD",
+                "market": bet["d2by_true_id"],
+                "type": "SINGLE",
+                "currentRate": prob_data["prob"],
+                "selectPosition": prob_data["position"],
+            }
+            tasks.append(d2by_make_bet(d2by_token, [data], bet["bet_id"]))
+
+            ids.append(bet["bet_id"])
+        ids = await asyncio.gather(*tasks)
+
+    return {"site": site, "ids": ids}
 
 
 def remove_id_key(d):
@@ -112,10 +225,3 @@ def add_bet_to_cfs(data, bet_id, bet_name, coef, url):
         }
     else:
         data[bet_id]["fan_bets"].update({f"{bet_name}": coef})
-
-
-def teams_right_order(team_1, team_2):
-    if team_1 < team_2:
-        return team_1, team_2, False
-    else:
-        return team_2, team_1, True

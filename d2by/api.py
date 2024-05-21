@@ -4,9 +4,8 @@ import json
 import aiohttp
 
 from config import D2BY_TIME_DELTA, DEFAULT_D2BY_HEADERS
-from main_app.utils import teams_right_order
 from telegram import send_telegram_message
-from main_app.utils import update_team_name
+from utils import update_team_name, teams_right_order
 
 
 async def collect_d2by_v2_matches():
