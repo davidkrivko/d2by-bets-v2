@@ -138,15 +138,15 @@ async def compare_circle(d2by_token, bets4pro_token):
 
 
 async def main_script():
-    # d2by_username = os.environ.get("D2BY_USERNAME")
-    # d2by_password = os.environ.get("D2BY_PASSWORD")
-    # gmail = Gmail()
-    #
-    # BETS4PRO_SESSION = login()
-    # D2BY_TOKEN = get_token(d2by_username, d2by_password, gmail)
+    d2by_username = os.environ.get("D2BY_USERNAME")
+    d2by_password = os.environ.get("D2BY_PASSWORD")
+    gmail = Gmail()
 
-    BETS4PRO_SESSION = None
-    D2BY_TOKEN = None
+    BETS4PRO_SESSION = login()
+    D2BY_TOKEN = get_token(d2by_username, d2by_password, gmail)
+
+    # BETS4PRO_SESSION = None
+    # D2BY_TOKEN = None
 
     i = 0
     while True:
