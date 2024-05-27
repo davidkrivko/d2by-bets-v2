@@ -56,7 +56,7 @@ def make_amounts(group):
 async def compare_circle(d2by_token, bets4pro_token):
     all_bets = await get_good_bets()
 
-    if all_bets is None:
+    if all_bets is None or all_bets.empty:
         return
 
     all_bets["bet_cf"] = all_bets.apply(lambda x: x["cfs"][x["bet"]], axis=1)
